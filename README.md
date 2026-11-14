@@ -1,4 +1,4 @@
-# Pressurized Liquid Extractor — ESP32 control and monitoring
+# Pressurized Liquid Extractor: ESP32 control and monitoring
 
 A system that **controls the temperature** of a pressurized liquid extractor (water, H₂O) and lets you **watch and operate it from a web page**, on a computer or a phone. Every reading and every change an operator makes is stored in a MySQL database.
 
