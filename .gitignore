@@ -1,0 +1,15 @@
+# Dependencias (se vuelven a instalar con "npm install")
+node_modules/
+
+# Contraseña de MySQL: NUNCA subir a GitHub
+server/db-config.json
+
+# Base de datos SQLite de la versión anterior
+*.db
+*.db-shm
+*.db-wal
+
+# Archivos del sistema y del editor
+.DS_Store
+Thumbs.db
+.vscode/

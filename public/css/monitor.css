@@ -1,0 +1,156 @@
+/* monitor.css — estilos propios de la pantalla de registro de operador */
+
+.monitor-body{
+  padding: 20px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.log-card{
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.log-card h2{
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #cfe9ee;
+  font-family: var(--mono);
+  text-transform: uppercase;
+}
+
+.log-form{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.log-form label{
+  display:flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b9ab99;
+}
+.log-form input,
+.log-form textarea,
+.log-filters select{
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 9px 10px;
+  border-radius: 5px;
+  border: 1px solid #3a444b;
+  background: #0f1115;
+  color: #eef3f5;
+  resize: vertical;
+}
+.log-form input:focus,
+.log-form textarea:focus,
+.log-filters select:focus{
+  outline: 2px solid #5fd3c4;
+}
+.log-status{
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--lcd-green);
+}
+.log-status.error{ color: var(--red); }
+
+.log-hint{
+  margin-top: 10px;
+  font-size: 11px;
+  color: #7c8a92;
+  font-family: var(--mono);
+}
+
+.log-filters{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.log-filters label{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b9ab99;
+  font-family: var(--sans);
+}
+.log-filters select{ min-width: 160px; }
+
+.log-table-wrap{
+  max-height: 420px;
+  overflow-y: auto;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.log-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+.log-table thead th{
+  position: sticky;
+  top: 0;
+  background: #1a1613;
+  color: #cfc6bb;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: var(--mono);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.log-table tbody td{
+  padding: 8px 10px;
+  color: #e7eef0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  vertical-align: top;
+}
+.log-table tbody tr:hover{
+  background: rgba(255,255,255,0.04);
+}
+.log-table td.log-hora{
+  font-family: var(--mono);
+  color: var(--lcd-green);
+  white-space: nowrap;
+}
+.log-table td.log-operador{
+  font-weight: 600;
+  white-space: nowrap;
+}
+.log-empty{
+  text-align:center;
+  color: #7c8a92;
+  padding: 18px 10px !important;
+}
+
+@media (max-width: 700px){
+  .log-filters{ flex-direction: column; align-items: stretch; }
+}
+
+/* Botón deshabilitado mientras se guarda (evita registros duplicados) */
+.pill-btn:disabled{ opacity:.55; cursor:wait; }
+
+/* Historial en celular: cada registro se muestra como tarjeta
+   (hora y operador arriba, la nota completa abajo) para que no se corte. */
+@media (max-width: 700px){
+  .log-table thead{ display:none; }
+  .log-table, .log-table tbody, .log-table tr, .log-table td{ display:block; width:auto; }
+  .log-table tbody tr{ padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .log-table tbody td{ border:0; padding: 2px 0; }
+  .log-table td.log-hora, .log-table td.log-operador{ display:inline-block; white-space:normal; }
+  .log-table td.log-hora{ margin-right: 10px; }
+  .log-table td.log-empty{ text-align:center; }
+  .log-table-wrap{ max-height: none; }
+}

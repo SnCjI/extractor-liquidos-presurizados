@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HMI — Monitor de registro de operador</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#12796c">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/monitor.css">
+</head>
+<body>
+<div class="stage">
+  <div class="bezel">
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+    <span class="screw br"></span>
+    <span class="lock-icon"></span>
+
+    <div class="panel-frame">
+      <div class="panel">
+
+        <div class="panel-header">
+          <div class="brand">
+            <div class="brand-badge">LOG</div>
+            <div class="brand-text">
+              <h1>MONITOR — REGISTRO DE OPERADOR</h1>
+              <div class="model">QUIÉN USÓ EL SISTEMA · DÍA · HORA · NOTA</div>
+            </div>
+          </div>
+          <div class="header-right">
+            <a class="pill-btn" href="/index.html">⟵ Volver al HMI</a>
+          </div>
+        </div>
+
+        <div class="monitor-body">
+
+          <!-- Formulario para agregar un nuevo registro -->
+          <div class="log-card">
+            <h2>Nuevo registro</h2>
+            <div class="log-form">
+              <label>
+                Operador (quién usa el sistema)
+                <input type="text" id="inpOperador" placeholder="Nombre de la persona" maxlength="80">
+              </label>
+              <label>
+                Nota (qué se hizo)
+                <textarea id="inpNota" placeholder="Ej. Se ajustó el setpoint de temperatura a 45°C, se revisó el sensor de presión..." maxlength="500" rows="3"></textarea>
+              </label>
+              <button class="pill-btn primary" id="btnGuardar">💾 Guardar registro</button>
+              <span class="log-status" id="logStatus"></span>
+            </div>
+            <div class="log-hint">
+              La fecha y la hora las pone el servidor automáticamente — no hace falta escribirlas.
+            </div>
+          </div>
+
+          <!-- Visor del historial por día -->
+          <div class="log-card">
+            <h2>Historial</h2>
+            <div class="log-filters">
+              <label>
+                Ver día:
+                <select id="selDia"></select>
+              </label>
+              <a class="pill-btn" href="/api/log/export.csv" download>⬇ Exportar CSV</a>
+              <button class="pill-btn" id="btnRefrescar">↻ Refrescar</button>
+            </div>
+            <div class="log-table-wrap">
+              <table class="log-table">
+                <thead>
+                  <tr><th>Hora</th><th>Operador</th><th>Nota</th></tr>
+                </thead>
+                <tbody id="logTableBody">
+                  <tr><td colspan="3" class="log-empty">Sin registros todavía.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/monitor.js"></script>
+</body>
+</html>

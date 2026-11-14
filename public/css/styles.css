@@ -1,0 +1,470 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --steel-1:      #d7dde1;
+  --steel-2:      #9aa4ac;
+  --steel-3:      #5c666e;
+  --header-dark:  #241f1c;
+  --canvas-blue:  #bfe3ee;
+  --canvas-blue-2:#a9d7e6;
+  --pipe-blue:    #2f7fae;
+  --pipe-green:   #2f6a4f;
+  --ink:          #16232a;
+  --lcd-bg:       #0c1410;
+  --lcd-green:    #37e07a;
+  --lcd-green-dim:#1f7a44;
+  --amber:        #f2a83c;
+  --red:          #e34b3f;
+  --green:        #35c766;
+  --grey-btn-1:   #f3f5f6;
+  --grey-btn-2:   #c3cbd0;
+  --sans: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+
+*{ box-sizing:border-box; }
+html,body{
+  margin:0; padding:0; min-height:100%;
+  background: radial-gradient(ellipse at 50% 0%, #2a333d, #0c1014 70%);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-user-select:none; user-select:none;
+}
+
+.stage{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 22px;
+}
+
+/* ================= BEZEL METÁLICO ================= */
+.bezel{
+  position:relative;
+  width:100%;
+  max-width: 1180px;
+  background:
+    repeating-linear-gradient(100deg,
+      var(--steel-1) 0px, var(--steel-2) 2px, var(--steel-1) 4px, var(--steel-2) 7px);
+  border-radius: 10px;
+  padding: 26px 30px;
+  box-shadow:
+    0 30px 70px rgba(0,0,0,0.6),
+    inset 0 0 0 2px rgba(255,255,255,0.4),
+    inset 0 -6px 18px rgba(0,0,0,0.35);
+}
+.screw{
+  position:absolute;
+  width:16px; height:16px;
+  border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, #f3f5f6, #7c858c 60%, #40484e);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.5);
+}
+.screw::after{
+  content:"";
+  position:absolute; top:50%; left:15%;
+  width:70%; height:2px;
+  background: rgba(40,40,40,0.6);
+  transform: translateY(-50%) rotate(35deg);
+}
+.screw.tl{ top:10px; left:10px; }
+.screw.tr{ top:10px; right:10px; }
+.screw.bl{ bottom:10px; left:10px; }
+.screw.br{ bottom:10px; right:10px; }
+
+.lock-icon{
+  position:absolute;
+  top: 8px; right: 46px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #b7c0c6 60%, #6c757c);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* ================= PANEL INTERNO ================= */
+.panel-frame{
+  background: #0c0c0d;
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.panel{
+  position:relative;
+  background: var(--header-dark);
+  border-radius: 4px;
+  overflow:hidden;
+}
+
+/* ---- Header ---- */
+.panel-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 12px 20px;
+  background: linear-gradient(180deg, #2b2521, #1a1613);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+.brand-badge{
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5fd3c4, #12796c 70%);
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--mono);
+  font-weight:700;
+  font-size: 12px;
+  color: #04231e;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.4);
+}
+.brand-text h1{
+  margin:0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f3efe9;
+}
+.brand-text .model{
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: #b9ab99;
+  letter-spacing: 0.06em;
+}
+.header-right{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+}
+.code-badge{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #cfc6bb;
+}
+.code-badge .ring{
+  width:18px; height:18px;
+  border-radius:50%;
+  border: 2px solid #e6b84a;
+  position:relative;
+}
+.code-badge .ring::after{
+  content:"";
+  position:absolute; inset:4px;
+  border-radius:50%;
+  background:#e6b84a;
+}
+
+/* ---- IoT tag lateral ---- */
+.iot-tag{
+  position:absolute;
+  top: 64px; right: 0;
+  background: linear-gradient(180deg, #e6453a, #b52a21);
+  color:#fff;
+  font-family: var(--mono);
+  font-weight:700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  padding: 10px 6px;
+  writing-mode: vertical-rl;
+  border-radius: 4px 0 0 4px;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.4);
+}
+
+/* ---- Lienzo azul (canvas del proceso) ---- */
+.canvas-wrap{
+  padding: 16px;
+}
+.canvas{
+  position:relative;
+  width:100%;
+  aspect-ratio: 1000 / 560;
+  background: linear-gradient(180deg, var(--canvas-blue), var(--canvas-blue-2));
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15), inset 0 2px 10px rgba(0,0,0,0.08);
+  overflow:hidden;
+}
+.canvas svg{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  display:block;
+}
+
+.diagram-title{
+  position:absolute;
+  top: 2.5%; left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(11px, 1.6vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #143142;
+  text-align:center;
+}
+
+/* ---- Luces de estado (POWER / RUN / ERR) ---- */
+.status-lights{
+  position:absolute;
+  top: 3%; left: 2%;
+  display:flex;
+  flex-direction:column;
+  gap: 3px;
+  font-family: var(--mono);
+  font-size: clamp(7px, 0.95vw, 10.5px);
+  color:#143142;
+}
+.status-lights .row{ display:flex; align-items:center; gap:5px; }
+.status-lights .led{
+  width: 8px; height:8px; border-radius:50%;
+  background:#7a8a92;
+  box-shadow: inset 0 0 1px rgba(0,0,0,0.5);
+}
+.status-lights .led.on-green{ background: var(--green); box-shadow:0 0 5px var(--green); }
+.status-lights .led.on-red{ background: var(--red); box-shadow:0 0 5px var(--red); }
+
+/* ---- Etiquetas del diagrama ---- */
+.diagram-label{
+  position:absolute;
+  font-size: clamp(7.5px, 1vw, 11px);
+  font-weight: 600;
+  color: #143142;
+  text-align:center;
+  transform: translate(-50%, 0);
+  line-height:1.15;
+  pointer-events:none;
+}
+
+/* ---- Pantallas LCD (lecturas) ---- */
+.lcd{
+  position:absolute;
+  transform: translate(-50%, 0);
+  background: var(--lcd-bg);
+  border: 1px solid #000;
+  border-radius: 3px;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--lcd-green);
+  text-shadow: 0 0 6px rgba(55,224,122,0.75);
+  font-size: clamp(9px, 1.3vw, 15px);
+  white-space: nowrap;
+  min-width: 64px;
+  text-align:center;
+}
+.lcd.small{ font-size: clamp(7.5px, 1vw, 11px); min-width:auto; padding:2px 5px; }
+.lcd .u{
+  color: var(--lcd-green-dim);
+  font-size: 0.7em;
+  margin-left: 3px;
+}
+
+/* ---- Botones tipo AJUSTE (grises 3D) ---- */
+.hmi-btn{
+  position:absolute;
+  transform: translate(-50%, 0);
+  background: linear-gradient(180deg, var(--grey-btn-1), var(--grey-btn-2));
+  border: 1px solid #7c868c;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: clamp(7px, 0.95vw, 10.5px);
+  color: #1c2327;
+  padding: 4px 8px;
+  cursor:pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.hmi-btn:active{ box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
+.hmi-btn.active{
+  background: linear-gradient(180deg, #7be3a0, #2fae5f);
+  color: #06301a;
+}
+
+/* ---- Valve / status dots sobre el diagrama ---- */
+.flow-dot{
+  position:absolute;
+  width: 12px; height:12px;
+  border-radius:50%;
+  transform: translate(-50%,-50%);
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  border: 1px solid rgba(0,0,0,0.3);
+}
+.flow-dot.off{ background: var(--red); box-shadow:0 0 6px var(--red); }
+
+/* ---- Mini panel de tendencia ---- */
+.trend-box{
+  position:absolute;
+  background: #0c1a20;
+  border: 1px solid rgba(0,0,0,0.3);
+  border-radius: 4px;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.6);
+}
+.trend-box canvas{ width:100%; height:100%; display:block; }
+
+/* ================= Controles inferiores ================= */
+.controls-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background: linear-gradient(180deg, #201b18, #14110f);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.mode-buttons{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+.mode-buttons .caption{
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight:600;
+  color: #b9ab99;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+.pill-btn{
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #7c868c;
+  background: linear-gradient(180deg, var(--grey-btn-1), var(--grey-btn-2));
+  color: #1c2327;
+  cursor:pointer;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.pill-btn.active{
+  background: linear-gradient(180deg, #7be3a0, #2fae5f);
+  color: #06301a;
+}
+.pill-btn.primary{
+  background: linear-gradient(180deg, #5fd3c4, #1a9c8e);
+  color: #052a24;
+}
+.pill-btn:hover{ filter: brightness(1.05); }
+a.pill-btn{ text-decoration:none; display:inline-block; }
+
+@media (max-width: 700px){
+  .panel-header{ flex-wrap:wrap; gap:8px; }
+  .controls-row{ justify-content:center; }
+}
+
+/* =====================================================================
+   VISTA CELULAR (pantallas de 700 px o menos)
+   El diagrama se dibuja arriba y las lecturas pasan a tarjetas grandes
+   debajo, para que nada quede encimado. En computadora no cambia nada.
+   ===================================================================== */
+@media (max-width: 700px){
+  .stage{ align-items:flex-start; padding: 8px; min-height:auto; }
+  .bezel{ padding: 18px 12px; }
+  .iot-tag{ display:none; }
+  .brand-text h1{ font-size: 14px; }
+  .canvas-wrap{ padding: 10px; }
+
+  .canvas{
+    aspect-ratio: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "svg   svg   svg"
+      "luz   luz   luz"
+      "lt    lp    lh"
+      "vt    vp    vh"
+      "ld    ltm   ls"
+      "vd    vtm   vs"
+      "chart chart chart";
+    gap: 6px 8px;
+    padding: 10px;
+  }
+  .canvas svg{ position: static; grid-area: svg; width:100%; height:auto; aspect-ratio: 700 / 320; }
+  .canvas .svg-title, .canvas .svg-status, .canvas .svg-trend{ display:none; }
+
+  /* Todo lo que en computadora va "flotando" sobre el dibujo se acomoda en la cuadrícula */
+  .canvas > .diagram-label,
+  .canvas > .lcd,
+  .canvas > .status-lights,
+  .canvas > .trend-box{ position: static; transform: none; }
+
+  .canvas > .flow-dot, .canvas > .lbl-envio{ display:none; }
+
+  .status-lights{
+    grid-area: luz; flex-direction: row; justify-content: center;
+    gap: 18px; font-size: 11px; padding: 4px 0;
+  }
+  .status-lights .led{ width:10px; height:10px; }
+
+  .diagram-label{ font-size: 10.5px; align-self: end; margin-top: 6px; }
+  .lbl-t{ grid-area: lt; }   .lbl-p{ grid-area: lp; }   .lbl-h{ grid-area: lh; }
+  .lbl-dev{ grid-area: ld; } .lbl-time{ grid-area: ltm; } .lbl-st{ grid-area: ls; }
+
+  .lcd{
+    font-size: 15px; min-width: 0 !important; padding: 8px 4px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .lcd.small{ font-size: 11px; padding: 6px 3px; }
+  #lcdTemp{ grid-area: vt; } #lcdPres{ grid-area: vp; } #lcdHum{ grid-area: vh; }
+  #lcdDevice{ grid-area: vd; } #lcdTime{ grid-area: vtm; } #lcdStatus{ grid-area: vs; }
+
+  .trend-box{
+    grid-area: chart;
+    width: auto !important; height: 230px !important;
+    margin-top: 8px; padding: 4px;
+  }
+
+  .controls-row{ padding: 12px; }
+  .mode-buttons{ flex-wrap: wrap; justify-content: center; }
+  .pill-btn{ padding: 10px 14px; font-size: 13px; }
+}
+
+/* ===== Ventana "Ver en celular" (dirección + QR) ===== */
+.cel-modal{
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(5, 10, 14, 0.72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.cel-modal[hidden]{ display: none; }
+.cel-card{
+  position: relative;
+  width: 100%; max-width: 560px; max-height: 92vh; overflow: auto;
+  background: linear-gradient(180deg, #2a2420, #1b1714);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 22px 24px;
+  color: #e7eef0;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  -webkit-user-select: text; user-select: text;
+}
+.cel-card h2{ margin: 0 0 10px; font-size: 18px; color: #f3efe9; }
+.cel-cerrar{
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: 0; color: #b9ab99; font-size: 20px; cursor: pointer;
+}
+.cel-pasos{ margin: 0 0 14px; padding-left: 20px; font-size: 13.5px; line-height: 1.5; color: #cfc6bb; }
+.cel-contenido{ display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+.cel-opcion{ text-align: center; }
+.cel-qr{ width: 220px; height: 220px; background: #fff; border-radius: 8px; padding: 6px; margin: 0 auto; }
+.cel-qr svg{ width: 100%; height: 100%; display: block; }
+.cel-url{
+  margin-top: 10px;
+  font-family: var(--mono); font-weight: 700; font-size: 17px;
+  color: var(--lcd-green);
+}
+.cel-red{ font-size: 11.5px; color: #8f9ba1; margin-top: 2px; }
+.cel-aviso{ color: #f0b5ae; font-size: 13.5px; }
+.cel-nota{ margin: 16px 0 0; font-size: 12px; color: #8f9ba1; line-height: 1.45; }
+
+/* En el celular el botón no hace falta (ya estás en el celular) */
+@media (max-width: 700px){
+  .btn-celular{ display: none; }
+}

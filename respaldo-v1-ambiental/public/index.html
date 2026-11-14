@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HMI — Sistema de monitoreo ambiental</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#12796c">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/css/styles.css">
+<script src="/vendor/chart.umd.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="bezel">
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+    <span class="screw br"></span>
+    <span class="lock-icon"></span>
+
+    <div class="panel-frame">
+      <div class="panel">
+
+        <div class="panel-header">
+          <div class="brand">
+            <div class="brand-badge">ESP</div>
+            <div class="brand-text">
+              <h1>SISTEMA DE MONITOREO AMBIENTAL</h1>
+              <div class="model">MODELO HT-AMBIENTAL · ESP32-HMI v1.0</div>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="code-badge"><span class="ring"></span> CODE</div>
+          </div>
+        </div>
+
+        <span class="iot-tag">IoT</span>
+
+        <div class="canvas-wrap">
+          <div class="canvas">
+            <svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="metalGauge" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#f3f6f7"/>
+                  <stop offset="100%" stop-color="#c3cdd2"/>
+                </linearGradient>
+                <linearGradient id="vesselBody" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#aebec6"/>
+                  <stop offset="100%" stop-color="#7d8e97"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Titulo -->
+              <text class="svg-title" x="500" y="26" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="700" font-size="19" fill="#143142">SISTEMA DE MONITOREO AMBIENTAL — ESP32</text>
+
+              <!-- Camara de proceso (BME280) -->
+              <g>
+                <ellipse cx="260" cy="190" rx="142" ry="22" fill="url(#vesselBody)" stroke="#1c2327" stroke-width="4"/>
+                <rect x="118" y="190" width="284" height="190" rx="16" fill="url(#vesselBody)" stroke="#1c2327" stroke-width="4"/>
+                <rect x="118" y="255" width="284" height="12" fill="#5c6e76"/>
+                <circle cx="260" cy="230" r="20" fill="#5c6e76" stroke="#1c2327" stroke-width="3"/>
+                <circle cx="260" cy="230" r="6" fill="#33424b"/>
+                <rect x="150" y="380" width="16" height="26" fill="#3a444b" stroke="#1c2327" stroke-width="2"/>
+                <rect x="354" y="380" width="16" height="26" fill="#3a444b" stroke="#1c2327" stroke-width="2"/>
+                <polygon points="350,362 366,362 358,378" fill="#e6b84a" stroke="#1c2327" stroke-width="2"/>
+                <text x="260" y="345" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="600" font-size="13" fill="#0e1a20">CÁMARA DE PROCESO</text>
+                <text x="260" y="363" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#22333c">SENSOR BME280</text>
+              </g>
+
+              <!-- Tuberias desde instrumentos hacia la camara -->
+              <line x1="170" y1="166" x2="170" y2="190" stroke="#2f6a4f" stroke-width="6" stroke-linecap="round"/>
+              <line x1="255" y1="166" x2="255" y2="190" stroke="#2f6a4f" stroke-width="6" stroke-linecap="round"/>
+              <line x1="340" y1="166" x2="340" y2="190" stroke="#2f6a4f" stroke-width="6" stroke-linecap="round"/>
+
+              <!-- Gauges T, P, H -->
+              <g id="gauge-group-temp">
+                <circle cx="170" cy="140" r="30" fill="url(#metalGauge)" stroke="#1c2327" stroke-width="3"/>
+                <circle cx="170" cy="140" r="22" fill="#0c1410"/>
+                <path d="M 152.4,153.2 A 22 22 0 0 1 152.4,126.8" fill="none" stroke="#35c766" stroke-width="4"/>
+                <path d="M 152.4,126.8 A 22 22 0 0 1 178.9,116.2" fill="none" stroke="#f2c94c" stroke-width="4"/>
+                <path d="M 178.9,116.2 A 22 22 0 0 1 187.6,153.2" fill="none" stroke="#e34b3f" stroke-width="4"/>
+                <g id="needle-temp" transform="rotate(225,170,140)">
+                  <line x1="170" y1="140" x2="170" y2="122" stroke="#e34b3f" stroke-width="2.6" stroke-linecap="round"/>
+                </g>
+                <circle cx="170" cy="140" r="3.5" fill="#eef3f5"/>
+                <text x="170" y="180" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="12" fill="#0e1a20">T</text>
+              </g>
+
+              <g id="gauge-group-pres">
+                <circle cx="255" cy="140" r="30" fill="url(#metalGauge)" stroke="#1c2327" stroke-width="3"/>
+                <circle cx="255" cy="140" r="22" fill="#0c1410"/>
+                <path d="M 237.4,153.2 A 22 22 0 0 1 237.4,126.8" fill="none" stroke="#35c766" stroke-width="4"/>
+                <path d="M 237.4,126.8 A 22 22 0 0 1 263.9,116.2" fill="none" stroke="#f2c94c" stroke-width="4"/>
+                <path d="M 263.9,116.2 A 22 22 0 0 1 272.6,153.2" fill="none" stroke="#e34b3f" stroke-width="4"/>
+                <g id="needle-pres" transform="rotate(225,255,140)">
+                  <line x1="255" y1="140" x2="255" y2="122" stroke="#e34b3f" stroke-width="2.6" stroke-linecap="round"/>
+                </g>
+                <circle cx="255" cy="140" r="3.5" fill="#eef3f5"/>
+                <text x="255" y="180" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="12" fill="#0e1a20">P</text>
+              </g>
+
+              <g id="gauge-group-hum">
+                <circle cx="340" cy="140" r="30" fill="url(#metalGauge)" stroke="#1c2327" stroke-width="3"/>
+                <circle cx="340" cy="140" r="22" fill="#0c1410"/>
+                <path d="M 322.4,153.2 A 22 22 0 0 1 322.4,126.8" fill="none" stroke="#35c766" stroke-width="4"/>
+                <path d="M 322.4,126.8 A 22 22 0 0 1 348.9,116.2" fill="none" stroke="#f2c94c" stroke-width="4"/>
+                <path d="M 348.9,116.2 A 22 22 0 0 1 357.6,153.2" fill="none" stroke="#e34b3f" stroke-width="4"/>
+                <g id="needle-hum" transform="rotate(225,340,140)">
+                  <line x1="340" y1="140" x2="340" y2="122" stroke="#e34b3f" stroke-width="2.6" stroke-linecap="round"/>
+                </g>
+                <circle cx="340" cy="140" r="3.5" fill="#eef3f5"/>
+                <text x="340" y="180" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="12" fill="#0e1a20">H</text>
+              </g>
+
+              <!-- Tuberia principal hacia el ESP32 -->
+              <path d="M 402,290 L 450,290" stroke="#2f7fae" stroke-width="8" fill="none" stroke-linecap="round"/>
+              <path d="M 510,290 L 545,290" stroke="#2f7fae" stroke-width="8" fill="none" stroke-linecap="round"/>
+              <polygon points="415,278 435,278 425,300" fill="#e6b84a" stroke="#1c2327" stroke-width="2"/>
+
+              <!-- Chip ESP32 -->
+              <g>
+                <rect x="450" y="262" width="60" height="56" rx="6" fill="#274b3a" stroke="#0e1a20" stroke-width="3"/>
+                <rect x="437" y="272" width="13" height="8" fill="#c3cdd2"/>
+                <rect x="437" y="286" width="13" height="8" fill="#c3cdd2"/>
+                <rect x="437" y="300" width="13" height="8" fill="#c3cdd2"/>
+                <rect x="510" y="272" width="13" height="8" fill="#c3cdd2"/>
+                <rect x="510" y="286" width="13" height="8" fill="#c3cdd2"/>
+                <rect x="510" y="300" width="13" height="8" fill="#c3cdd2"/>
+                <text x="480" y="294" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="11" fill="#dff4e6">ESP32</text>
+                <circle id="txLed" cx="497" cy="272" r="4" fill="#3a4f45"/>
+              </g>
+
+              <!-- WiFi hacia el servidor -->
+              <g id="wifiIcon" opacity="0.4">
+                <path d="M 545,265 Q 590,215 630,232" fill="none" stroke="#2f7fae" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/>
+                <path d="M 560,255 A 34 34 0 0 1 606,240" fill="none" stroke="#2f7fae" stroke-width="4" stroke-linecap="round"/>
+                <path d="M 570,242 A 18 18 0 0 1 597,235" fill="none" stroke="#2f7fae" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="605" cy="232" r="4" fill="#2f7fae"/>
+              </g>
+
+              <!-- Servidor Node.js -->
+              <g>
+                <rect x="628" y="168" width="150" height="92" rx="8" fill="#8fa4ad" stroke="#1c2327" stroke-width="3"/>
+                <rect x="642" y="182" width="122" height="14" rx="3" fill="#3a444b"/>
+                <rect x="642" y="203" width="122" height="14" rx="3" fill="#3a444b"/>
+                <rect x="642" y="224" width="122" height="14" rx="3" fill="#3a444b"/>
+                <circle id="serverLed" cx="753" cy="189" r="4" fill="#35c766"/>
+                <circle cx="753" cy="210" r="4" fill="#7a8a92"/>
+                <circle cx="753" cy="231" r="4" fill="#7a8a92"/>
+                <text x="703" y="252" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="600" font-size="11.5" fill="#0e1a20">SERVIDOR NODE.JS</text>
+              </g>
+
+              <!-- Panel de estado (derecha) -->
+              <g class="svg-status">
+                <rect x="822" y="150" width="158" height="150" rx="8" fill="rgba(255,255,255,0.4)" stroke="#1c2327" stroke-width="2"/>
+                <text x="901" y="168" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="700" font-size="10.5" fill="#143142">ESTADO DEL SISTEMA</text>
+              </g>
+
+              <!-- Panel de tendencia -->
+              <g class="svg-trend">
+                <rect x="578" y="328" width="384" height="196" rx="8" fill="rgba(255,255,255,0.25)" stroke="#1c2327" stroke-width="2"/>
+                <text x="770" y="348" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="700" font-size="11.5" fill="#143142">TENDENCIA — HISTORIAL</text>
+              </g>
+
+            </svg>
+
+            <!-- Luces de estado -->
+            <div class="status-lights">
+              <div class="row"><span class="led on-green"></span> POWER</div>
+              <div class="row"><span class="led" id="ledRun"></span> RUN</div>
+              <div class="row"><span class="led" id="ledErr"></span> ERR</div>
+            </div>
+
+            <!-- Punto de flujo (envio de datos) -->
+            <div class="flow-dot off" id="flowDot" style="left:42.5%; top:50.9%;"></div>
+            <div class="diagram-label lbl-envio" style="left:42.5%; top:44.6%;">ENVÍO DE<br>DATOS</div>
+
+            <!-- Etiquetas + LCDs de lecturas -->
+            <div class="diagram-label lbl-t" style="left:17%; top:73.2%;">T_PROCESO</div>
+            <div class="lcd" style="left:17%; top:79.5%;" id="lcdTemp">--.- <span class="u">°C</span></div>
+
+            <div class="diagram-label lbl-p" style="left:25.5%; top:73.2%;">P_PROCESO</div>
+            <div class="lcd" style="left:25.5%; top:79.5%;" id="lcdPres">----.- <span class="u">hPa</span></div>
+
+            <div class="diagram-label lbl-h" style="left:34%; top:73.2%;">HR_PROCESO</div>
+            <div class="lcd" style="left:34%; top:79.5%;" id="lcdHum">--.- <span class="u">%HR</span></div>
+
+            <!-- LCDs del panel de estado -->
+            <div class="diagram-label lbl-dev" style="left:90.1%; top:33%;">DISPOSITIVO</div>
+            <div class="lcd small" style="left:90.1%; top:36.5%; min-width:120px;" id="lcdDevice">—</div>
+
+            <div class="diagram-label lbl-time" style="left:90.1%; top:44.5%;">ÚLTIMA LECTURA</div>
+            <div class="lcd small" style="left:90.1%; top:48%; min-width:120px;" id="lcdTime">—</div>
+
+            <div class="diagram-label lbl-st" style="left:90.1%; top:56%;">ESTADO</div>
+            <div class="lcd small" style="left:90.1%; top:59.5%; min-width:120px;" id="lcdStatus">SIN DATOS</div>
+
+            <!-- Panel de tendencia -->
+            <div class="trend-box" style="left:58.8%; top:63.5%; width:37.4%; height:32%;">
+              <canvas id="historyChart"></canvas>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="controls-row">
+          <div class="mode-buttons">
+            <span class="caption">REFRESCO</span>
+            <button class="pill-btn active" data-ms="1000">1s</button>
+            <button class="pill-btn" data-ms="3000">3s</button>
+            <button class="pill-btn" data-ms="5000">5s</button>
+          </div>
+          <div class="mode-buttons">
+            <button class="pill-btn btn-celular" id="btnCelular">📱 Ver en celular</button>
+            <a class="pill-btn" href="/monitor.html">📋 Registro de operador</a>
+            <a class="pill-btn" href="/api/export.csv" download>⬇ Exportar CSV</a>
+            <button class="pill-btn primary" id="kioskBtn">⤢ Modo kiosco</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ventana "Ver en celular": dirección + código QR para abrir el HMI desde el teléfono -->
+<div class="cel-modal" id="celModal" hidden>
+  <div class="cel-card" role="dialog" aria-modal="true" aria-labelledby="celTitulo">
+    <button class="cel-cerrar" id="celCerrar" aria-label="Cerrar">✕</button>
+    <h2 id="celTitulo">📱 Abrir en el celular</h2>
+    <ol class="cel-pasos">
+      <li>Conecta el celular a la <b>misma red WiFi</b> que esta computadora.</li>
+      <li>Escanea el código con la cámara, o escribe la dirección en Chrome.</li>
+    </ol>
+    <div id="celContenido" class="cel-contenido">Buscando la dirección…</div>
+    <p class="cel-nota">¿No abre? Ejecuta una vez <b>server\permitir-celular-firewall.bat</b> como administrador y marca tu red WiFi como <b>Privada</b>.</p>
+  </div>
+</div>
+
+<script src="/vendor/qrcode.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

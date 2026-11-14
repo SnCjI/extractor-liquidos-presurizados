@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMI — Extractor de líquidos presurizados</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#12796c">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/extractor.css">
+<script src="/vendor/chart.umd.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="bezel">
+    <span class="screw tl"></span><span class="screw tr"></span>
+    <span class="screw bl"></span><span class="screw br"></span>
+    <span class="lock-icon"></span>
+
+    <div class="panel-frame">
+      <div class="panel">
+
+        <!-- ===================== ENCABEZADO ===================== -->
+        <div class="panel-header">
+          <div class="brand">
+            <div class="brand-badge">H₂O</div>
+            <div class="brand-text">
+              <h1>EXTRACTOR DE LÍQUIDOS PRESURIZADOS</h1>
+              <div class="model">AGUA PRESURIZADA · 3 ZONAS DE CALENTAMIENTO · ESP32-HMI v2.0</div>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="conn-pill" id="connPill"><span class="dot"></span><span id="connText">SIN DATOS</span></div>
+            <div class="clock" id="clock">--:--:--</div>
+          </div>
+        </div>
+
+        <!-- ===================== BARRA DE CONTROL ===================== -->
+        <div class="control-bar">
+          <button class="power-btn" id="powerBtn" aria-pressed="false">
+            <span class="power-ico">⏻</span>
+            <span class="power-txt" id="powerTxt">ENCENDER SISTEMA</span>
+          </button>
+          <div class="system-state">
+            <div class="state-line"><span class="state-lbl">Estado</span> <b id="sysState">Apagado</b></div>
+            <div class="state-line"><span class="state-lbl">Último ajuste</span> <span id="lastSet">—</span></div>
+          </div>
+          <div class="alarm-box" id="alarmBox" hidden>
+            <span class="alarm-ico" aria-hidden="true">⚠</span><span id="alarmTxt"></span>
+          </div>
+        </div>
+
+        <!-- ===================== DIAGRAMA DEL PROCESO ===================== -->
+        <div class="canvas-wrap">
+          <div class="process-card">
+            <svg id="processSvg" class="process" viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg"
+                 role="img" aria-label="Diagrama del extractor: tanque de agua, bomba, extractor con tres zonas de calentamiento, válvula de salida y colector">
+              <defs>
+                <linearGradient id="gTank" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#c9d2d7"/><stop offset=".45" stop-color="#f4f7f8"/><stop offset="1" stop-color="#9aa6ad"/>
+                </linearGradient>
+                <linearGradient id="gVessel" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#7d8b93"/><stop offset=".5" stop-color="#b9c5cb"/><stop offset="1" stop-color="#6c7a82"/>
+                </linearGradient>
+                <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#5cc3ef"/><stop offset="1" stop-color="#1e78b8"/>
+                </linearGradient>
+                <clipPath id="clipTank"><rect x="62" y="152" width="96" height="236" rx="18"/></clipPath>
+                <filter id="fGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="4" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- ---------- Tuberías (debajo de todo) ---------- -->
+              <g class="pipes">
+                <path class="pipe" d="M160 400 H218"/>
+                <path class="pipe" d="M282 400 H450"/>
+                <path class="pipe" d="M550 110 V70 H752"/>
+                <path class="pipe" d="M808 70 H920 V276"/>
+                <!-- capa animada: el agua avanza cuando el sistema está encendido -->
+                <path class="flow" d="M160 400 H218"/>
+                <path class="flow" d="M282 400 H450"/>
+                <path class="flow" d="M550 110 V70 H752"/>
+                <path class="flow" d="M808 70 H920 V276"/>
+              </g>
+
+              <!-- ---------- ① Tanque de H2O ---------- -->
+              <g class="stage-label"><circle cx="66" cy="118" r="13"/><text x="66" y="123">1</text></g>
+              <text class="lbl" x="86" y="123">TANQUE H₂O</text>
+              <rect x="60" y="150" width="100" height="240" rx="20" fill="url(#gTank)" stroke="#1c2327" stroke-width="3"/>
+              <g clip-path="url(#clipTank)">
+                <rect x="50" y="230" width="130" height="170" fill="url(#gWater)"/>
+                <path class="wave" d="M20 232 Q 40 222 60 232 T 100 232 T 140 232 T 180 232 T 220 232 V 245 H20 Z" fill="#7fd3f5"/>
+              </g>
+              <text class="tank-txt" x="110" y="320">H₂O</text>
+              <text class="sub" x="110" y="412">alimentación</text>
+
+              <!-- ---------- ② Bomba (opcional) ---------- -->
+              <g class="optional">
+                <circle cx="250" cy="400" r="32" fill="#e6ecef" stroke="#6b7a82" stroke-width="3" stroke-dasharray="6 5"/>
+                <path class="impeller" d="M250 378 L250 422 M228 400 L272 400 M234 384 L266 416 M266 384 L234 416" stroke="#6b7a82" stroke-width="3" stroke-linecap="round"/>
+              </g>
+              <g class="stage-label"><circle cx="214" cy="458" r="13"/><text x="214" y="463">2</text></g>
+              <text class="lbl" x="234" y="463">BOMBA</text>
+              <text class="sub left" x="234" y="480">opcional · no instalada</text>
+
+              <!-- ---------- ③ Extractor con 3 zonas ---------- -->
+              <g class="stage-label"><circle cx="454" cy="36" r="13"/><text x="454" y="41">3</text></g>
+              <text class="lbl" x="474" y="41">EXTRACTOR</text>
+
+              <!-- manómetro (sin sensor todavía) -->
+              <g class="gauge optional">
+                <line x1="492" y1="104" x2="492" y2="112" stroke="#4a565d" stroke-width="5"/>
+                <circle cx="492" cy="82" r="22" fill="#f4f7f8" stroke="#1c2327" stroke-width="3"/>
+                <path d="M476 90 A18 18 0 1 1 508 90" fill="none" stroke="#9aa6ad" stroke-width="3"/>
+                <line id="presNeedle" x1="492" y1="82" x2="480" y2="92" stroke="#e34b3f" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="492" cy="82" r="3" fill="#1c2327"/>
+              </g>
+              <text class="sub" x="440" y="88" text-anchor="end" style="text-anchor:end">P: <tspan id="presTxt">sin sensor</tspan></text>
+
+              <rect x="450" y="110" width="200" height="340" rx="26" fill="url(#gVessel)" stroke="#1c2327" stroke-width="4"/>
+              <rect x="472" y="128" width="156" height="304" rx="14" fill="#cfe8f2" stroke="#3c4a52" stroke-width="2"/>
+
+              <!-- Zonas: cada una tiene su resistencia (serpentín) que brilla al encenderse -->
+              <g class="zona" id="zona1" data-z="1">
+                <rect class="zona-fill" x="472" y="128" width="156" height="100" rx="14"/>
+                <path class="coil" d="M484 160 h14 l6 -12 l12 24 l12 -24 l12 24 l12 -24 l12 24 l12 -24 l12 24 l12 -24 l6 12 h16"/>
+                <text class="zona-name" x="550" y="214">ZONA 1 · SUPERIOR</text>
+              </g>
+              <g class="zona" id="zona2" data-z="2">
+                <rect class="zona-fill" x="472" y="230" width="156" height="100" rx="4"/>
+                <path class="coil" d="M484 262 h14 l6 -12 l12 24 l12 -24 l12 24 l12 -24 l12 24 l12 -24 l12 24 l12 -24 l6 12 h16"/>
+                <text class="zona-name" x="550" y="316">ZONA 2 · MEDIA</text>
+              </g>
+              <g class="zona" id="zona3" data-z="3">
+                <rect class="zona-fill" x="472" y="332" width="156" height="100" rx="14"/>
+                <path class="coil" d="M484 364 h14 l6 -12 l12 24 l12 -24 l12 24 l12 -24 l12 24 l12 -24 l12 24 l12 -24 l6 12 h16"/>
+                <text class="zona-name" x="550" y="418">ZONA 3 · INFERIOR</text>
+              </g>
+              <line x1="472" y1="229" x2="628" y2="229" stroke="#3c4a52" stroke-width="2" stroke-dasharray="4 4"/>
+              <line x1="472" y1="331" x2="628" y2="331" stroke="#3c4a52" stroke-width="2" stroke-dasharray="4 4"/>
+              <rect x="490" y="450" width="18" height="22" fill="#3a444b"/>
+              <rect x="592" y="450" width="18" height="22" fill="#3a444b"/>
+
+              <!-- Etiquetas de temperatura por zona (se llenan desde extractor.js) -->
+              <g class="ztag" id="ztag1" transform="translate(668 140)">
+                <line class="leader" x1="-40" y1="38" x2="0" y2="38"/>
+                <rect class="ztag-box" width="168" height="76" rx="8"/>
+                <rect class="ztag-stripe z1" width="7" height="76" rx="3"/>
+                <text class="ztag-t" x="18" y="40" id="zt1">--.- °C</text>
+                <text class="ztag-sp" x="18" y="62">ajuste <tspan id="zsp1">--</tspan> °C</text>
+                <circle class="ztag-led" id="zled1" cx="150" cy="18" r="7"/>
+              </g>
+              <g class="ztag" id="ztag2" transform="translate(668 242)">
+                <line class="leader" x1="-40" y1="38" x2="0" y2="38"/>
+                <rect class="ztag-box" width="168" height="76" rx="8"/>
+                <rect class="ztag-stripe z2" width="7" height="76" rx="3"/>
+                <text class="ztag-t" x="18" y="40" id="zt2">--.- °C</text>
+                <text class="ztag-sp" x="18" y="62">ajuste <tspan id="zsp2">--</tspan> °C</text>
+                <circle class="ztag-led" id="zled2" cx="150" cy="18" r="7"/>
+              </g>
+              <g class="ztag" id="ztag3" transform="translate(668 344)">
+                <line class="leader" x1="-40" y1="38" x2="0" y2="38"/>
+                <rect class="ztag-box" width="168" height="76" rx="8"/>
+                <rect class="ztag-stripe z3" width="7" height="76" rx="3"/>
+                <text class="ztag-t" x="18" y="40" id="zt3">--.- °C</text>
+                <text class="ztag-sp" x="18" y="62">ajuste <tspan id="zsp3">--</tspan> °C</text>
+                <circle class="ztag-led" id="zled3" cx="150" cy="18" r="7"/>
+              </g>
+
+              <!-- ---------- ④ Válvula de salida ---------- -->
+              <g class="stage-label"><circle cx="746" cy="36" r="13"/><text x="746" y="41">4</text></g>
+              <text class="lbl" x="766" y="41">VÁLVULA</text>
+              <path class="valve" d="M752 54 L808 86 L808 54 L752 86 Z" fill="#f2c94c" stroke="#1c2327" stroke-width="3" stroke-linejoin="round"/>
+              <line x1="780" y1="70" x2="780" y2="50" stroke="#1c2327" stroke-width="3"/>
+              <rect x="768" y="44" width="24" height="8" rx="2" fill="#1c2327"/>
+              <text class="sub left" x="766" y="104">manual</text>
+
+              <!-- ---------- ⑤ Colector ---------- -->
+              <path d="M904 276 h32 v40 l44 104 q4 12 -10 12 h-100 q-14 0 -10 -12 l44 -104 z" fill="#eef6f9" stroke="#1c2327" stroke-width="3" stroke-linejoin="round"/>
+              <path class="extract" d="M878 392 h84 l16 36 q2 6 -6 6 h-104 q-8 0 -6 -6 z" fill="#d9b44a" opacity=".85"/>
+              <g class="drip"><circle cx="920" cy="290" r="4" fill="#4aa8d8"/></g>
+              <g class="stage-label"><circle cx="874" cy="466" r="13"/><text x="874" y="471">5</text></g>
+              <text class="lbl" x="894" y="471">COLECTOR</text>
+              <text class="sub left" x="894" y="488">extracto</text>
+
+              <!-- ---------- Cadena de control: ESP32 → SSR → resistencias ---------- -->
+              <g class="control-chain">
+                <rect x="268" y="486" width="96" height="30" rx="5" fill="#274b3a" stroke="#0e1a20" stroke-width="2"/>
+                <text x="316" y="506" class="chip-txt">ESP32</text>
+                <path d="M364 501 H452" class="wire"/>
+                <g id="ssrBox1" class="ssr"><rect x="452" y="488" width="56" height="26" rx="4"/><text x="480" y="505">SSR1</text></g>
+                <g id="ssrBox2" class="ssr"><rect x="522" y="488" width="56" height="26" rx="4"/><text x="550" y="505">SSR2</text></g>
+                <g id="ssrBox3" class="ssr"><rect x="592" y="488" width="56" height="26" rx="4"/><text x="620" y="505">SSR3</text></g>
+              </g>
+            </svg>
+            <div class="legend-row">
+              <span><i class="lg coil-on"></i> resistencia encendida</span>
+              <span><i class="lg flow-on"></i> agua en movimiento (sistema encendido)</span>
+              <span><i class="lg optional-lg"></i> opcional / sin sensor</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== TARJETAS DE ZONAS ===================== -->
+        <div class="cards">
+          <section class="zcard" id="zcard1" data-z="1">
+            <header><span class="ztag-chip z1"></span><h2>Zona 1 <small>superior</small></h2><span class="zstate" id="zstate1">—</span></header>
+            <div class="zvalue"><span id="zval1">--.-</span><small>°C</small></div>
+            <div class="zbar"><span class="zbar-fill z1" id="zbar1"></span><span class="zbar-sp" id="zbarsp1"></span></div>
+            <footer><span>Ajuste: <b id="zspv1">--</b> °C</span><button class="pill-btn adj-btn" data-z="1">✎ AJUSTE</button></footer>
+          </section>
+          <section class="zcard" id="zcard2" data-z="2">
+            <header><span class="ztag-chip z2"></span><h2>Zona 2 <small>media</small></h2><span class="zstate" id="zstate2">—</span></header>
+            <div class="zvalue"><span id="zval2">--.-</span><small>°C</small></div>
+            <div class="zbar"><span class="zbar-fill z2" id="zbar2"></span><span class="zbar-sp" id="zbarsp2"></span></div>
+            <footer><span>Ajuste: <b id="zspv2">--</b> °C</span><button class="pill-btn adj-btn" data-z="2">✎ AJUSTE</button></footer>
+          </section>
+          <section class="zcard" id="zcard3" data-z="3">
+            <header><span class="ztag-chip z3"></span><h2>Zona 3 <small>inferior</small></h2><span class="zstate" id="zstate3">—</span></header>
+            <div class="zvalue"><span id="zval3">--.-</span><small>°C</small></div>
+            <div class="zbar"><span class="zbar-fill z3" id="zbar3"></span><span class="zbar-sp" id="zbarsp3"></span></div>
+            <footer><span>Ajuste: <b id="zspv3">--</b> °C</span><button class="pill-btn adj-btn" data-z="3">✎ AJUSTE</button></footer>
+          </section>
+          <section class="zcard info">
+            <header><h2>Equipo</h2></header>
+            <dl class="info-list">
+              <dt>Dispositivo</dt><dd id="devId">—</dd>
+              <dt>Última lectura</dt><dd id="lastRead">—</dd>
+              <dt>Presión</dt><dd id="presCard">sin sensor</dd>
+              <dt>Resistencias</dt><dd id="ssrCount">—</dd>
+            </dl>
+          </section>
+        </div>
+
+        <!-- ===================== GRÁFICA ===================== -->
+        <div class="chart-card">
+          <div class="chart-head">
+            <h2>Temperatura de las zonas</h2>
+            <span class="chart-note">línea punteada = ajuste de cada zona</span>
+          </div>
+          <div class="chart-box"><canvas id="historyChart" aria-label="Gráfica de temperatura de las tres zonas en el tiempo"></canvas></div>
+        </div>
+
+        <!-- ===================== BOTONES ===================== -->
+        <div class="controls-row">
+          <div class="mode-buttons">
+            <span class="caption">REFRESCO</span>
+            <button class="pill-btn active" data-ms="1000">1s</button>
+            <button class="pill-btn" data-ms="3000">3s</button>
+            <button class="pill-btn" data-ms="5000">5s</button>
+          </div>
+          <div class="mode-buttons">
+            <button class="pill-btn btn-celular" id="btnCelular">📱 Ver en celular</button>
+            <a class="pill-btn" href="/monitor.html">📋 Registro de operador</a>
+            <a class="pill-btn" href="/api/export.csv" download>⬇ Exportar CSV</a>
+            <button class="pill-btn primary" id="kioskBtn">⤢ Modo kiosco</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VENTANA: AJUSTE / ENCENDIDO ===================== -->
+<div class="cel-modal" id="adjModal" hidden>
+  <form class="cel-card adj-card" id="adjForm" role="dialog" aria-modal="true" aria-labelledby="adjTitle">
+    <button type="button" class="cel-cerrar" data-cerrar aria-label="Cerrar">✕</button>
+    <h2 id="adjTitle">Ajuste</h2>
+    <p class="adj-desc" id="adjDesc"></p>
+    <div class="adj-value" id="adjValueRow">
+      <button type="button" class="pill-btn step" data-step="-5">−5</button>
+      <button type="button" class="pill-btn step" data-step="-1">−1</button>
+      <label class="adj-input"><input type="number" id="adjInput" step="0.5" inputmode="decimal"><span>°C</span></label>
+      <button type="button" class="pill-btn step" data-step="1">+1</button>
+      <button type="button" class="pill-btn step" data-step="5">+5</button>
+    </div>
+    <p class="adj-range" id="adjRange"></p>
+    <label class="adj-op">Operador (quién hace el cambio)
+      <input type="text" id="adjOperador" placeholder="Nombre de la persona" autocomplete="name" required>
+    </label>
+    <p class="adj-status" id="adjStatus" role="status"></p>
+    <div class="adj-actions">
+      <button type="button" class="pill-btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="pill-btn primary" id="adjOk">Aplicar</button>
+    </div>
+    <p class="cel-nota">El cambio se guarda en la base de datos y en la bitácora. El ESP32 lo recibe en su siguiente envío (≈2 s).</p>
+  </form>
+</div>
+
+<!-- Ventana "Ver en celular": dirección + código QR -->
+<div class="cel-modal" id="celModal" hidden>
+  <div class="cel-card" role="dialog" aria-modal="true" aria-labelledby="celTitulo">
+    <button class="cel-cerrar" id="celCerrar" aria-label="Cerrar">✕</button>
+    <h2 id="celTitulo">📱 Abrir en el celular</h2>
+    <ol class="cel-pasos">
+      <li>Conecta el celular a la <b>misma red WiFi</b> que esta computadora.</li>
+      <li>Escanea el código con la cámara, o escribe la dirección en Chrome.</li>
+    </ol>
+    <div id="celContenido" class="cel-contenido">Buscando la dirección…</div>
+    <p class="cel-nota">¿No abre? Ejecuta una vez <b>server\permitir-celular-firewall.bat</b> como administrador y marca tu red WiFi como <b>Privada</b>.</p>
+  </div>
+</div>
+
+<script src="/vendor/qrcode.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "hmi-dashboard-server",
+  "version": "1.0.0",
+  "description": "Backend HMI del extractor de liquidos presurizados (H2O, 3 zonas) - ESP32 + MySQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "serial-bridge": "node serial-bridge.js",
+    "start:mysql": "node server-mysql.js",
+    "migrar": "node migrar-sqlite-a-mysql.js",
+    "simular": "node simulador-esp32.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "chart.js": "^4.5.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.11.0",
+    "serialport": "^12.0.0"
+  }
+}

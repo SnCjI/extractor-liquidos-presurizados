@@ -1,0 +1,17 @@
+{
+  "name": "HMI — Extractor de líquidos presurizados",
+  "short_name": "HMI Extractor",
+  "description": "Panel del extractor de H2O con 3 zonas de calentamiento (ESP32 + MySQL)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#10151a",
+  "theme_color": "#12796c",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
