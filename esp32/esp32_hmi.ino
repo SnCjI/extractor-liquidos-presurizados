@@ -29,13 +29,14 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+#include "secrets.h"   // credenciales locales, no se sube a GitHub
 
 // ------------------- CONFIGURACIÓN -------------------
 
 // Nombre y contraseña de la red WiFi que el ESP32 va a crear.
 // La contraseña debe tener 8 caracteres o más.
 const char* AP_SSID     = "HMI-ESP32";
-const char* AP_PASSWORD = "extraccion2024";
+const char* AP_PASSWORD = AP_PASSWORD_SECRET;
 
 // IP fija del ESP32 dentro de su propia red (no la cambies salvo
 // que también cambies las instrucciones de la laptop más abajo).
@@ -49,7 +50,7 @@ IPAddress AP_SUBNET(255, 255, 255, 0);
 const char* SERVER_URL   = "http://192.168.4.2:3000/api/data";
 
 // Debe coincidir con DEVICE_KEY en server.js
-const char* DEVICE_KEY   = "cambia-esta-clave";
+const char* DEVICE_KEY   = DEVICE_KEY_SECRET;
 const char* DEVICE_ID    = "esp32-planta-1";
 
 // Cada cuánto se envía una lectura (ms)

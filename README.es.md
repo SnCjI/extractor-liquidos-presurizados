@@ -264,10 +264,30 @@ El programa tiene protecciones que el ESP32 aplica por su cuenta, aunque la pág
 
 Estas protecciones son de software y **no sustituyen una protección física**. El equipo trabaja con 127 V y con un recipiente a presión, así que se debe instalar un termostato o fusible térmico en serie con cada resistencia y una válvula de alivio. El cableado de 127 V se conecta y desconecta siempre con la clavija fuera.
 
-**Antes de publicar o compartir el código:**
+**Credenciales: dónde van y dónde no**
+
+Este repositorio es público, así que ninguna contraseña real vive dentro del código.
 
 - El archivo `server/db-config.json` guarda la contraseña de MySQL. Está en `.gitignore` para que **no se suba a GitHub**.
-- La contraseña de la red WiFi del ESP32 y la clave del dispositivo (`DEVICE_KEY`) están escritas en el código con valores de ejemplo. Conviene cambiarlas antes de usar el sistema fuera del laboratorio.
+- La contraseña del Access Point del ESP32 y la clave del dispositivo (`DEVICE_KEY`) se leen de un archivo `secrets.h` que **también está en `.gitignore`**. Cada carpeta de sketch trae una plantilla `secrets.h.example`. Antes de compilar:
+
+  ```bash
+  cd esp32/esp32_extractor
+  cp secrets.h.example secrets.h      # y pon tus valores reales
+  ```
+
+  Si el sketch no compila porque no encuentra `secrets.h`, es exactamente este paso el que falta.
+
+- El servidor lee la misma clave de la variable de entorno `DEVICE_KEY`, y tiene que coincidir con la de `secrets.h`:
+
+  ```bash
+  cd server
+  DEVICE_KEY=tu-clave npm start
+  ```
+
+  Si no se define la variable, el servidor usa el valor de relleno `cambia-esta-clave`, que no sirve para nada fuera de una prueba local.
+
+- Si alguna de estas claves se llegó a subir al repositorio, cambiarla en el código no basta: el valor anterior sigue siendo visible en el historial de commits. Hay que generar una clave nueva y dar de baja la vieja.
 
 ---
 

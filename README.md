@@ -266,10 +266,30 @@ The program has protections that the ESP32 applies on its own, even if the page 
 
 These are software protections and **do not replace physical protection**. The equipment works with 127 V and a pressurized vessel, so a thermostat or thermal fuse must be installed in series with each heater, plus a relief valve. The 127 V wiring is always connected and disconnected with the plug out.
 
-**Before publishing or sharing the code:**
+**Credentials: where they go and where they don't**
+
+This repository is public, so no real password lives inside the code.
 
 - The file `server/db-config.json` stores the MySQL password. It is listed in `.gitignore` so it is **not uploaded to GitHub**.
-- The ESP32 WiFi password and the device key (`DEVICE_KEY`) are written in the code with example values. They should be changed before using the system outside the lab.
+- The ESP32 Access Point password and the device key (`DEVICE_KEY`) are read from a `secrets.h` file that is **also listed in `.gitignore`**. Every sketch folder ships a `secrets.h.example` template. Before compiling:
+
+  ```bash
+  cd esp32/esp32_extractor
+  cp secrets.h.example secrets.h      # then fill in your real values
+  ```
+
+  If the sketch fails to compile because `secrets.h` is missing, this is the step that was skipped.
+
+- The server reads the same key from the `DEVICE_KEY` environment variable, and it must match the one in `secrets.h`:
+
+  ```bash
+  cd server
+  DEVICE_KEY=your-key npm start
+  ```
+
+  With the variable unset, the server falls back to the placeholder `cambia-esta-clave`, which is good for nothing beyond a local test.
+
+- If any of these keys was ever pushed to the repository, changing it in the code is not enough: the old value stays visible in the commit history. Generate a new key and retire the old one.
 
 ---
 

@@ -1,8 +1,31 @@
 # Dependencias (se vuelven a instalar con "npm install")
 node_modules/
 
-# Contraseña de MySQL: NUNCA subir a GitHub
+# ===== CREDENCIALES: NUNCA SUBIR A GITHUB =====
+
+# Contraseña de MySQL
 server/db-config.json
+
+# Credenciales del ESP32 (AP_PASSWORD y DEVICE_KEY).
+# La plantilla secrets.h.example SÍ se sube; secrets.h NO.
+secrets.h
+**/secrets.h
+!secrets.h.example
+!**/secrets.h.example
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Llaves y certificados
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+*_rsa
+*.ppk
 
 # Base de datos SQLite de la versión anterior
 *.db
