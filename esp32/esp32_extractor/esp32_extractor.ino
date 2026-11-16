@@ -52,19 +52,20 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include "secrets.h"   // credenciales locales, no se sube a GitHub
 
 // ======================= CONFIGURACIÓN =======================
 
 // Red WiFi que crea el ESP32 (contraseña de 8 caracteres o más)
 const char* AP_SSID     = "HMI-ESP32";
-const char* AP_PASSWORD = "extraccion2024";
+const char* AP_PASSWORD = AP_PASSWORD_SECRET;
 IPAddress AP_IP(192, 168, 4, 1);
 IPAddress AP_GATEWAY(192, 168, 4, 1);
 IPAddress AP_SUBNET(255, 255, 255, 0);
 
 // Servidor en la laptop (IP fija 192.168.4.2 dentro de la red del ESP32)
 const char* SERVER_URL = "http://192.168.4.2:3000/api/data";
-const char* DEVICE_KEY = "cambia-esta-clave";   // igual que en el servidor
+const char* DEVICE_KEY = DEVICE_KEY_SECRET;   // igual que en el servidor
 const char* DEVICE_ID  = "esp32-extractor-1";
 
 // Pines
