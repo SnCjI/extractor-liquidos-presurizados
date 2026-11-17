@@ -76,12 +76,14 @@ const int PIN_SSR[NUM_ZONAS] = { 25, 26 };  // SSR de la zona 1 y 2
 // Si tu SSR enciende con LOW en vez de HIGH, cambia esto a LOW:
 const int SSR_ENCENDIDO = HIGH;
 
-// Ganancias del PID de cada zona. Afínalas primero con prueba_pid.ino
-// y copia aquí los valores que te funcionaron.
+// Ganancias del PID de cada zona. Son valores CONSERVADORES que no se pasan
+// del ajuste ni en una celda de acero pesada (pueden ser lentos).
+// Saca los de TU equipo con la prueba de escalón de prueba_finalpid.ino y
+// server/calcular-pid.js, y cópialos aquí (cada zona puede tener los suyos).
 //                               zona 1  zona 2
-const float KP[NUM_ZONAS] = {    5.0,    5.0   };   // % de potencia por °C de error
-const float KI[NUM_ZONAS] = {    0.05,   0.05  };   // % por (°C · s)
-const float KD[NUM_ZONAS] = {    10.0,   10.0  };   // % por (°C / s)
+const float KP[NUM_ZONAS] = {    4.0,    4.0   };   // % de potencia por °C de error
+const float KI[NUM_ZONAS] = {    0.005,  0.005 };   // % por (°C · s)
+const float KD[NUM_ZONAS] = {    40.0,   40.0  };   // % por (°C / s)
 
 // Límites y tiempos
 const float SP_MIN = 0.0;                  // °C  (el servidor usa los mismos límites)

@@ -195,7 +195,7 @@ Están en la carpeta `esp32`, del más sencillo al completo:
 | Programa | Para qué sirve |
 |---|---|
 | `prueba_max6675` | Probar solo el termopar: muestra la temperatura en el Monitor Serie |
-| `prueba_pid` | Probar el PID con una resistencia, sin WiFi. Se maneja con comandos (`sp 60`, `on`, `off`, `kp 5`, `ki 0.05`, `kd 10`) y se ve la curva en el Serial Plotter |
+| `prueba_finalpid` | Probar el PID con una resistencia, sin WiFi. Se maneja con comandos (`sp 60`, `on`, `off`, `kp 4`, `ki 0.005`, `kd 40`) y se ve la curva en el Serial Plotter. También tiene modo manual (`pot 40`, `auto`) para la prueba de escalón |
 | `esp32_extractor` | El programa completo: 2 zonas, PID, WiFi y comunicación con el servidor |
 
 ---
@@ -222,7 +222,7 @@ En el orden en que se fueron logrando:
 
 **9. Control PID.** Se cambió el control de prendido/apagado por un PID con salida de 0 a 100 %. Se probó con un modelo simulado del equipo: llegó al ajuste sin pasarse más de 0.5 °C y las protecciones respondieron (termopar desconectado y pérdida del servidor).
 
-**10. El ESP32 maneja el relevador.** Con el programa `prueba_pid`, el ESP32 prende y hace parpadear el SSR según la potencia que calcula el PID. Esta prueba se hizo con la resistencia desconectada de la corriente.
+**10. El ESP32 maneja el relevador.** Con el programa `prueba_finalpid`, el ESP32 prende y hace parpadear el SSR según la potencia que calcula el PID. Esta prueba se hizo con la resistencia desconectada de la corriente.
 
 **11. Primera comparación de la lectura.** Se comparó el termopar contra un termómetro infrarrojo: el termopar marcó cerca de 41.5 °C y el infrarrojo 36.8 °C.
 
@@ -233,7 +233,10 @@ En el orden en que se fueron logrando:
 ## En proceso
 
 - **Prueba de calentamiento con la resistencia conectada.** Es el siguiente paso: cerrar el ciclo completo (termopar → PID → SSR → resistencia) con un ajuste bajo y ver la curva.
-- **Afinar el PID.** Los valores actuales (`kp 5`, `ki 0.05`, `kd 10`) salieron de un modelo simulado. Hay que ajustarlos con el equipo real.
+- **Afinar el PID.** Los valores iniciales (`kp 4`, `ki 0.005`, `kd 40`) son conservadores: en simulación no se pasan del ajuste ni en una celda de acero pesada, pero pueden ser lentos. Los valores correctos para este equipo salen de una **prueba de escalón**:
+  1. Con todo frío, en `prueba_finalpid` escribe `pot 40` (potencia fija de 40 %, sin PID) y deja calentar de 20 a 30 minutos sin pasar de 80 °C. Luego escribe `off`.
+  2. Copia todo el Monitor Serie (con la marca de tiempo activada) a un archivo de texto, por ejemplo `escalon.txt`.
+  3. En la carpeta `server` ejecuta `node calcular-pid.js escalon.txt`. Mide el retraso y la velocidad de calentamiento del equipo y da valores de `kp`, `ki` y `kd` recomendados, más suaves y más rápidos (método SIMC).
 - **Revisar la diferencia de lectura.** Hay unos 5 °C entre el termopar y el termómetro infrarrojo. Puede deberse a que miden puntos distintos, o a que los infrarrojos leen de menos en metal brillante. Hay que compararlo contra una referencia confiable (por ejemplo, agua con hielo y agua hirviendo).
 
 ---
@@ -282,7 +285,7 @@ hmi-dashboard/
 │   └── notas-tecnicas.md      notas técnicas detalladas y documentación de versiones anteriores
 ├── esp32/
 │   ├── prueba_max6675/        prueba del termopar
-│   ├── prueba_pid/            prueba del PID con una resistencia
+│   ├── prueba_finalpid/            prueba del PID con una resistencia
 │   └── esp32_extractor/       programa completo (2 zonas, PID, WiFi)
 ├── server/
 │   ├── server-mysql.js        servidor: recibe lecturas, guarda y entrega ajustes

@@ -197,7 +197,7 @@ They are in the `esp32` folder, from the simplest to the complete one:
 | Program | What it is for |
 |---|---|
 | `prueba_max6675` | Tests only the thermocouple: prints the temperature on the Serial Monitor |
-| `prueba_pid` | Tests the PID with one heater, without WiFi. It is driven with commands (`sp 60`, `on`, `off`, `kp 5`, `ki 0.05`, `kd 10`) and the curve is shown in the Serial Plotter |
+| `prueba_finalpid` | Tests the PID with one heater, without WiFi. It is driven with commands (`sp 60`, `on`, `off`, `kp 4`, `ki 0.005`, `kd 40`) and the curve is shown in the Serial Plotter. It also has a manual mode (`pot 40`, `auto`) for the step test |
 | `esp32_extractor` | The complete program: 2 zones, PID, WiFi and communication with the server |
 
 ---
@@ -224,7 +224,7 @@ In the order they were achieved:
 
 **9. PID control.** The on/off control was replaced with a PID with a 0 to 100 % output. It was tested against a simulated model of the equipment: it reached the set-point without overshooting more than 0.5 °C, and the protections responded (thermocouple disconnected and server lost).
 
-**10. The ESP32 drives the relay.** With the `prueba_pid` program, the ESP32 switches the SSR and makes it blink according to the power the PID calculates. This test was done with the heater unplugged from mains.
+**10. The ESP32 drives the relay.** With the `prueba_finalpid` program, the ESP32 switches the SSR and makes it blink according to the power the PID calculates. This test was done with the heater unplugged from mains.
 
 **11. First check of the reading.** The thermocouple was compared against an infrared thermometer: the thermocouple read about 41.5 °C and the infrared one 36.8 °C.
 
@@ -235,7 +235,10 @@ In the order they were achieved:
 ## In progress
 
 - **Heating test with the heater connected.** This is the next step: closing the full loop (thermocouple → PID → SSR → heater) with a low set-point and looking at the curve.
-- **Tuning the PID.** The current values (`kp 5`, `ki 0.05`, `kd 10`) came from a simulated model. They need to be adjusted on the real equipment.
+- **Tuning the PID.** The default values (`kp 4`, `ki 0.005`, `kd 40`) are conservative: in simulation they do not overshoot even on a heavy steel cell, but they may be slow. The right values for this equipment come from a **step test**:
+  1. With everything cold, in `prueba_finalpid` type `pot 40` (fixed 40 % power, no PID) and let it heat for 20–30 minutes without going above 80 °C. Then type `off`.
+  2. Copy the whole Serial Monitor (with timestamps on) into a text file, e.g. `escalon.txt`.
+  3. In the `server` folder run `node calcular-pid.js escalon.txt`. It measures the delay and heating speed of the equipment and prints recommended, softer and faster `kp`, `ki`, `kd` values (SIMC method).
 - **Checking the difference in readings.** There are about 5 °C between the thermocouple and the infrared thermometer. It may be because they measure different spots, or because infrared thermometers read low on shiny metal. It has to be compared against a reliable reference (for example, ice water and boiling water).
 
 ---
@@ -284,7 +287,7 @@ hmi-dashboard/
 │   └── notas-tecnicas.md      detailed technical notes and documentation of earlier versions (Spanish)
 ├── esp32/
 │   ├── prueba_max6675/        thermocouple test
-│   ├── prueba_pid/            PID test with one heater
+│   ├── prueba_finalpid/            PID test with one heater
 │   └── esp32_extractor/       complete program (2 zones, PID, WiFi)
 ├── server/
 │   ├── server-mysql.js        server: receives readings, stores and serves set-points

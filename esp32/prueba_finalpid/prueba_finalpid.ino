@@ -1,5 +1,5 @@
 /*
-  prueba_pid.ino — Prueba del CONTROL PID de UNA resistencia
+  prueba_finalpid.ino — Prueba del CONTROL PID de UNA resistencia
   ---------------------------------------------------------------
   Termopar tipo K + modulo MAX6675  ->  ESP32  ->  SSR-40DA  ->  resistencia
   Sin WiFi y sin servidor: sirve para probar y AFINAR el PID antes de
@@ -17,9 +17,11 @@
          sp 80      temperatura deseada (de 0 a 100 °C; 80 °C es el maximo recomendado)
          on         enciende el control (la resistencia empieza APAGADA)
          off        apaga la resistencia
-         kp 5       cambia la ganancia proporcional   (sin volver a subir el programa)
-         ki 0.05    cambia la ganancia integral
-         kd 10      cambia la ganancia derivativa
+         kp 4       cambia la ganancia proporcional   (sin volver a subir el programa)
+         ki 0.005   cambia la ganancia integral
+         kd 40      cambia la ganancia derivativa
+         pot 40     MODO MANUAL: potencia fija de 40 % (sin PID), para la prueba de escalon
+         auto       regresa al PID (sin saltos de potencia)
          ?          muestra los valores actuales
     2. Para VER la curva: cierra el Monitor Serie y abre
        Herramientas -> Serial Plotter (115200). Se dibujan 3 lineas:
@@ -33,8 +35,23 @@
       I (ki): corrige el error que queda con el tiempo (para que llegue exacto).
       D (kd): frena cuando la temperatura sube muy rapido (evita pasarse).
 
+  COMO SACAR LOS VALORES DE kp, ki, kd PARA TU EQUIPO (prueba de escalon)
+    Cada equipo necesita sus propios valores: una celda de acero grande
+    tarda mucho en calentar y en "enterarse" el termopar, y con valores de
+    un equipo ligero se pasa del ajuste y oscila.
+    1. Con todo frio, en el Monitor Serie activa la marca de tiempo (icono
+       del reloj) y escribe:  pot 40
+    2. Deja que caliente sin tocar nada de 20 a 30 minutos (o hasta que la
+       temperatura casi deje de subir). No pases de 80 °C: si se acerca,
+       escribe off.
+    3. Escribe off. Selecciona TODO el texto del Monitor Serie (Ctrl+A),
+       copialo (Ctrl+C) y pegalo en un archivo de texto, por ejemplo
+       escalon.txt
+    4. En la carpeta server:   node calcular-pid.js escalon.txt
+       Te da los valores de kp, ki y kd calculados para TU equipo.
+
   SEGURIDAD: si el termopar falla o la temperatura pasa de 105 °C,
-  la resistencia se apaga sola.
+  la resistencia se apaga sola (tambien en modo manual).
   ---------------------------------------------------------------
 */
 
@@ -43,7 +60,11 @@ const int PIN_SO  = 19;
 const int PIN_SCK = 18;
 const int PIN_CS  = 5;
 const int PIN_SSR = 25;
-const int SSR_ENCENDIDO = LOW // si tu SSR enciende con LOW, cambia a LOW
+// El SSR-40DA enciende cuando su terminal 3 (+) recibe voltaje, o sea con HIGH.
+// NO lo cambies a LOW con el SSR conectado asi (3 -> GPIO 25, 4 -> GND):
+// la logica quedaria al reves y la resistencia se PRENDERIA al arrancar
+// y cuando el PID pide 0 %.
+const int SSR_ENCENDIDO = HIGH;
 
 // ---------------- Ajustes ----------------
 const float SP_MIN = 0.0;              // °C
@@ -55,6 +76,8 @@ const unsigned long VENTANA_MS     = 2000;   // ventana de encendido del SSR
 
 float ajuste = 80.0;      // °C deseados
 bool  controlOn = false;  // empieza APAGADO: escribe "on" para empezar
+bool  modoManual = false; // true = potencia fija (prueba de escalon), sin PID
+float potManual = 0;      // % de potencia en modo manual
 
 // ---------------- PID ----------------
 struct ControlPID {
@@ -88,7 +111,10 @@ struct ControlPID {
   }
 };
 
-ControlPID pid = { 5.0, 0.05, 10.0 };   // kp, ki, kd iniciales (ajustalos con tu equipo)
+// Valores iniciales CONSERVADORES: no se pasan del ajuste ni en una celda de
+// acero pesada, pero pueden ser lentos. Los buenos para TU equipo salen de la
+// prueba de escalon (ver arriba) con server/calcular-pid.js
+ControlPID pid = { 4.0, 0.005, 40.0 };   // kp, ki, kd
 
 float temperatura = NAN;
 float potencia = 0;          // %
@@ -125,8 +151,13 @@ void ponerSSR(bool encender) {
 
 // ---------------- Comandos por el Monitor Serie ----------------
 void mostrarAjustes() {
+  if (controlOn && modoManual) {
+    Serial.printf("# MODO MANUAL: potencia fija %.1f %% | kp %.3f  ki %.4f  kd %.3f\n",
+                  potManual, pid.kp, pid.ki, pid.kd);
+    return;
+  }
   Serial.printf("# Ajuste %.1f C | control %s | kp %.3f  ki %.4f  kd %.3f\n",
-                ajuste, controlOn ? "ENCENDIDO" : "apagado", pid.kp, pid.ki, pid.kd);
+                ajuste, controlOn ? "ENCENDIDO (PID)" : "apagado", pid.kp, pid.ki, pid.kd);
 }
 
 void leerComando() {
@@ -151,8 +182,24 @@ void leerComando() {
   if (cmd == "on") {
     pid.reiniciar();
     controlOn = true;
+    modoManual = false;
   } else if (cmd == "off") {
     controlOn = false;
+    modoManual = false;
+  } else if (cmd == "pot" && !isnan(valor)) {
+    if (valor < 0 || valor > 100) {
+      Serial.println("# La potencia manual debe estar entre 0 y 100 %");
+      return;
+    }
+    potManual = valor;
+    modoManual = true;
+    controlOn = true;
+  } else if (cmd == "auto") {
+    // Regresa al PID empezando con la potencia que tenia (no da un salto)
+    pid.reiniciar();
+    pid.integral = constrain(potencia, 0, 100);
+    modoManual = false;
+    controlOn = true;
   } else if (cmd == "sp" && !isnan(valor)) {
     if (valor < SP_MIN || valor > SP_MAX) {
       Serial.printf("# El ajuste debe estar entre %.0f y %.0f C\n", SP_MIN, SP_MAX);
@@ -170,7 +217,7 @@ void leerComando() {
   } else if (cmd == "kd" && !isnan(valor) && valor >= 0) {
     pid.kd = valor;
   } else if (cmd != "?") {
-    Serial.println("# Comandos: sp 80 | on | off | kp 5 | ki 0.05 | kd 10 | ?");
+    Serial.println("# Comandos: sp 80 | on | off | kp 4 | ki 0.005 | kd 40 | pot 40 | auto | ?");
     return;
   }
   mostrarAjustes();
@@ -191,7 +238,7 @@ void setup() {
   delay(500);                      // el MAX6675 tarda ~0.25 s en su primera medicion
   Serial.println();
   Serial.println("# === Prueba PID: termopar K + MAX6675 + SSR ===");
-  Serial.println("# Comandos: sp 80 | on | off | kp 5 | ki 0.05 | kd 10 | ?");
+  Serial.println("# Comandos: sp 80 | on | off | kp 4 | ki 0.005 | kd 40 | pot 40 | auto | ?");
   mostrarAjustes();
   inicioVentana = millis();
 }
@@ -214,6 +261,9 @@ void loop() {
       potencia = 0; pid.reiniciar();               // "estado" ya dice la falla
     } else if (temperatura >= T_MAX_SEGURIDAD) {
       potencia = 0; pid.reiniciar(); estado = "SOBRETEMPERATURA: resistencia apagada";
+    } else if (modoManual) {
+      potencia = potManual;                        // prueba de escalon: potencia fija
+      estado = "CONTROLANDO";
     } else {
       potencia = pid.calcular(ajuste, temperatura, dt);
       estado = "CONTROLANDO";

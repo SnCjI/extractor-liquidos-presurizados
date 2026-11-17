@@ -15,8 +15,8 @@ ESP32 ──WiFi (red HMI-ESP32)──► server-mysql.js (laptop 192.168.4.2) �
 
 **Archivos principales**
 - `esp32/prueba_max6675/` — prueba SOLO del termopar (muestra la temperatura en el Monitor Serie).
-- `esp32/prueba_pid/` — prueba del PID con UNA resistencia, sin WiFi. Se controla desde el
-  Monitor Serie (`sp 80`, `on`, `off`, `kp 5`, `ki 0.05`, `kd 10`) y se ve la curva en el
+- `esp32/prueba_finalpid/` — prueba del PID con UNA resistencia, sin WiFi. Se controla desde el
+  Monitor Serie (`sp 80`, `on`, `off`, `kp 4`, `ki 0.005`, `kd 40`, `pot 40`, `auto`) y se ve la curva en el
   Serial Plotter. Sirve para afinar las ganancias antes de usar el programa completo.
 - `esp32/esp32_extractor/esp32_extractor.ino` — firmware completo: lee los 2 termopares
   (MAX6675: SCK GPIO 18, SO GPIO 19, CS GPIO 5 y 17, VCC a 3V3), calcula con PID la potencia
@@ -32,8 +32,10 @@ ESP32 ──WiFi (red HMI-ESP32)──► server-mysql.js (laptop 192.168.4.2) �
   abajo es más intensa cuanto más potencia) y **Datos** (tabla tipo Excel de la bitácora y de
   las lecturas, con búsqueda y descarga CSV).
 
-**Afinar el PID (con prueba_pid.ino)**
-1. Empieza con `kp 5`, `ki 0.05`, `kd 10`, `sp 60`, `on` y mira el Serial Plotter.
+**Afinar el PID (con prueba_finalpid.ino)**
+0. Lo mejor es medir el equipo con la prueba de escalón (`pot 40`) y calcular los valores con
+   `node calcular-pid.js escalon.txt` (ver README). Si quieres afinarlos a mano:
+1. Empieza con `kp 4`, `ki 0.005`, `kd 40`, `sp 60`, `on` y mira el Serial Plotter.
 2. Si sube muy lento y se queda abajo del ajuste → sube `ki` (0.08, 0.1).
 3. Si se pasa del ajuste y oscila → baja `kp` y `ki`, o sube `kd` (15, 20).
 4. Cuando quede bien, copia los valores en `KP`, `KI`, `KD` de `esp32_extractor.ino`.
