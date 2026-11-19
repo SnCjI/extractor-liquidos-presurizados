@@ -48,12 +48,20 @@ CREATE TABLE IF NOT EXISTS setpoints (
   sp_z3            DOUBLE NOT NULL,   -- (no se usa)
   sistema_on       TINYINT NOT NULL,
   actualizado_ts   BIGINT NOT NULL,
-  actualizado_por  VARCHAR(100) NULL
+  actualizado_por  VARCHAR(100) NULL,
+  kp1              DOUBLE NULL,       -- ganancias del PID de la zona 1
+  ki1              DOUBLE NULL,
+  kd1              DOUBLE NULL,
+  kp2              DOUBLE NULL,       -- ganancias del PID de la zona 2
+  ki2              DOUBLE NULL,
+  kd2              DOUBLE NULL
 ) ENGINE=InnoDB;
-INSERT IGNORE INTO setpoints VALUES (1, 60, 60, 60, 0, UNIX_TIMESTAMP()*1000, 'sistema');
+INSERT IGNORE INTO setpoints
+  (id, sp_z1, sp_z2, sp_z3, sistema_on, actualizado_ts, actualizado_por, kp1, ki1, kd1, kp2, ki2, kd2)
+  VALUES (1, 60, 60, 60, 0, UNIX_TIMESTAMP()*1000, 'sistema', 4, 0.005, 40, 4, 0.005, 40);
 
--- Si la tabla readings ya existía de antes, el servidor agrega pot1 y pot2
--- solo al arrancar (no tienes que hacer nada).
+-- Si las tablas ya existían de antes, el servidor agrega solo al arrancar
+-- las columnas nuevas (pot1, pot2 y las ganancias kp/ki/kd). No tienes que hacer nada.
 
 -- Consultas útiles:
 --   SELECT * FROM readings ORDER BY ts DESC LIMIT 50;

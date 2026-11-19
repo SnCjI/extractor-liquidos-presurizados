@@ -18,7 +18,9 @@ const DEVICE_KEY = process.env.DEVICE_KEY || 'cambia-esta-clave';
 const INTERVALO_MS = 2000;
 
 // Mismos valores que en el firmware
-const KP = 5.0, KI = 0.05, KD = 10.0;
+// Ganancias iniciales (igual que el firmware). Después se usan las que
+// mande el servidor, que son las que el operador escribe en la página.
+const KP = 4.0, KI = 0.005, KD = 40.0;
 const T_MAX_SEGURIDAD = 105;     // °C: por encima, resistencia apagada siempre
 const TIMEOUT_SERVIDOR_MS = 15000;
 
@@ -92,7 +94,23 @@ function paso() {
     presion: null,
     sistema_on: setpoints.sistema_on ? 1 : 0,
     alarma: [...alarmas].join(' '),
+    // Ganancias que está usando y zonas conectadas (igual que el firmware)
+    kp1: zonas[0].pid.kp, ki1: zonas[0].pid.ki, kd1: zonas[0].pid.kd, inst1: 1,
+    kp2: zonas[1].pid.kp, ki2: zonas[1].pid.ki, kd2: zonas[1].pid.kd, inst2: 1,
   };
+}
+
+// Toma las ganancias del PID que mandó el servidor (como el firmware)
+function aplicarGanancias(sp) {
+  zonas.forEach((z, i) => {
+    const n = i + 1;
+    const kp = Number(sp['kp' + n]), ki = Number(sp['ki' + n]), kd = Number(sp['kd' + n]);
+    if (![kp, ki, kd].every(Number.isFinite)) return;
+    if (kp !== z.pid.kp || ki !== z.pid.ki || kd !== z.pid.kd) {
+      z.pid.kp = kp; z.pid.ki = ki; z.pid.kd = kd;
+      console.log(`PID zona ${n} actualizado desde la página: kp ${kp}  ki ${ki}  kd ${kd}`);
+    }
+  });
 }
 
 async function enviar() {
@@ -106,6 +124,7 @@ async function enviar() {
     const r = await res.json();
     if (r.ok && r.setpoints) {
       setpoints = r.setpoints;
+      aplicarGanancias(r.setpoints);
       ultimaRespuesta = Date.now();
     }
     const pot = (p) => String(p.toFixed(0)).padStart(3) + ' %';

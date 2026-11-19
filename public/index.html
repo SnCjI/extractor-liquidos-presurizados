@@ -208,7 +208,11 @@
                 <div class="zpot-bar"><span class="zpot-fill z1" id="zpot1"></span></div>
                 <b class="zpot-val" id="zpotv1">—</b>
               </div>
-              <footer><span>Ajuste: <b id="zspv1">--</b> °C</span><button class="pill-btn adj-btn" data-z="1">✎ AJUSTE</button></footer>
+              <div class="zpid" title="Ganancias del control PID de la zona 1">
+                <span class="zpid-vals" id="zpid1">PID —</span>
+                <span class="zpid-ok" id="zpidok1"></span>
+              </div>
+              <footer><span>Ajuste: <b id="zspv1">--</b> °C</span><span class="zbtns"><button class="pill-btn pid-btn" data-z="1">⚙ PID</button><button class="pill-btn adj-btn" data-z="1">✎ AJUSTE</button></span></footer>
             </section>
             <section class="zcard" id="zcard2" data-z="2">
               <header><span class="ztag-chip z2"></span><h2>Zona 2 <small>inferior</small></h2><span class="zstate" id="zstate2">—</span></header>
@@ -219,7 +223,11 @@
                 <div class="zpot-bar"><span class="zpot-fill z2" id="zpot2"></span></div>
                 <b class="zpot-val" id="zpotv2">—</b>
               </div>
-              <footer><span>Ajuste: <b id="zspv2">--</b> °C</span><button class="pill-btn adj-btn" data-z="2">✎ AJUSTE</button></footer>
+              <div class="zpid" title="Ganancias del control PID de la zona 2">
+                <span class="zpid-vals" id="zpid2">PID —</span>
+                <span class="zpid-ok" id="zpidok2"></span>
+              </div>
+              <footer><span>Ajuste: <b id="zspv2">--</b> °C</span><span class="zbtns"><button class="pill-btn pid-btn" data-z="2">⚙ PID</button><button class="pill-btn adj-btn" data-z="2">✎ AJUSTE</button></span></footer>
             </section>
             <section class="zcard info">
               <header><h2>Equipo</h2></header>
@@ -339,6 +347,18 @@
       <label class="adj-input"><input type="number" id="adjInput" step="0.5" inputmode="decimal"><span>°C</span></label>
       <button type="button" class="pill-btn step" data-step="1">+1</button>
       <button type="button" class="pill-btn step" data-step="5">+5</button>
+    </div>
+    <div class="adj-pid" id="adjPidRow" hidden>
+      <label class="pid-campo"><span><b>kp</b> proporcional</span>
+        <input type="number" id="pidKp" step="any" min="0" inputmode="decimal">
+        <small>Más alto = reacciona más fuerte a la diferencia con el ajuste.</small></label>
+      <label class="pid-campo"><span><b>ki</b> integral</span>
+        <input type="number" id="pidKi" step="any" min="0" inputmode="decimal">
+        <small>Corrige lo que falta para llegar exacto. Muy alto = se pasa y oscila.</small></label>
+      <label class="pid-campo"><span><b>kd</b> derivativa</span>
+        <input type="number" id="pidKd" step="any" min="0" inputmode="decimal">
+        <small>Frena cuando sube rápido. Muy alto = la potencia brinca mucho.</small></label>
+      <button type="button" class="pill-btn pid-defecto" id="pidDefecto">Usar valores iniciales</button>
     </div>
     <p class="adj-range" id="adjRange"></p>
     <label class="adj-op">Operador (quién hace el cambio)

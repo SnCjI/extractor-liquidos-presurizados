@@ -26,6 +26,11 @@ const COLUMNAS_EXTRACTOR = [
   ['alarma',     'VARCHAR(160) NULL'],    // texto de alarma reportado por el ESP32
 ];
 
+// Ganancias del PID por zona (tabla setpoints) y sus valores iniciales.
+// Son conservadores: no se pasan del ajuste ni en una celda de acero pesada.
+const COLUMNAS_PID = ['kp1', 'ki1', 'kd1', 'kp2', 'ki2', 'kd2'];
+const PID_DEFECTO = { kp: 4, ki: 0.005, kd: 40 };
+
 async function crearBaseYTablas(config) {
   const conexion = await mysql.createConnection(config);
   try {
@@ -95,9 +100,31 @@ async function crearBaseYTablas(config) {
        VALUES (1, 60, 60, 60, 0, ?, 'sistema')`,
       [Date.now()]
     );
+
+    // Ganancias del PID de cada zona (se cambian desde la página y el ESP32
+    // las recibe en cada envío). Se agregan sin borrar lo que ya había.
+    const [colsSp] = await conexion.query(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'setpoints'`,
+      [DB_NAME]
+    );
+    const tieneSp = new Set(colsSp.map((c) => c.COLUMN_NAME));
+    for (const col of COLUMNAS_PID) {
+      if (!tieneSp.has(col)) {
+        await conexion.query(`ALTER TABLE setpoints ADD COLUMN ${col} DOUBLE NULL`);
+      }
+    }
+    // Si están vacías, se llenan con los valores conservadores
+    for (const z of [1, 2]) {
+      await conexion.query(
+        `UPDATE setpoints SET kp${z} = COALESCE(kp${z}, ?), ki${z} = COALESCE(ki${z}, ?),
+                kd${z} = COALESCE(kd${z}, ?) WHERE id = 1`,
+        [PID_DEFECTO.kp, PID_DEFECTO.ki, PID_DEFECTO.kd]
+      );
+    }
   } finally {
     await conexion.end();
   }
 }
 
-module.exports = { DB_NAME, crearBaseYTablas };
+module.exports = { DB_NAME, crearBaseYTablas, PID_DEFECTO };

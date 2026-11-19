@@ -156,6 +156,8 @@ Things worth knowing:
 - To change a set-point or turn the system on, the page **asks for the operator's name**. That way every change is signed in the logbook.
 - The allowed set-point range is **0 to 100 °C**. **80 °C is the recommended maximum**: if someone enters more, the page asks for confirmation and the logbook flags it.
 - The **Ver en celular** (View on phone) button shows a QR code to open the page from a phone.
+- Each zone has a **⚙ PID** button to change its `kp`, `ki` and `kd`. The ESP32 picks up the new values in about 2 seconds, without uploading the program again. The card shows the current values and **✓ en el ESP32** once the ESP32 confirms it is using them. Every change is logged with the operator's name.
+- If a zone is not wired yet (set `ZONA_INSTALADA` to `false` in `esp32_extractor.ino`), the page shows it as **NO CONECTADA** instead of raising an alarm.
 
 ---
 
@@ -228,6 +230,10 @@ In the order they were achieved:
 
 **11. First check of the reading.** The thermocouple was compared against an infrared thermometer: the thermocouple read about 41.5 °C and the infrared one 36.8 °C.
 
+**12. PID tuning tools.** A manual mode for step tests (`pot 40`) and the `calcular-pid.js` script that computes `kp`, `ki` and `kd` from the measured response of the equipment.
+
+**13. PID control from the page.** The `kp`, `ki` and `kd` of each zone are changed from the web page and stored in MySQL; the ESP32 applies them on the fly and reports back which values it is using.
+
 ![Comparison between the infrared thermometer and the thermocouple reading](docs/img/comparacion-termometro.jpg)
 
 ---
@@ -251,10 +257,9 @@ In the order they were achieved:
 4. **Calibrate the thermocouples** and, if needed, add a correction in the program.
 5. **Add the pressure sensor.** The page and the database already have a place reserved for it; today they show "sin sensor" (no sensor).
 6. **Install the feed pump**, which appears as optional in the diagram.
-7. **Change the PID gains from the page**, without having to upload the program to the ESP32 again.
-8. **Move the system to the lab's final computer**, along with its database.
-9. **Mount the electronics in an enclosure**, with the physical protections installed.
-10. **Update the project proposal** with the changes: MySQL instead of SQLite, 2 zones, water as the fluid and PID control.
+7. **Move the system to the lab's final computer**, along with its database.
+8. **Mount the electronics in an enclosure**, with the physical protections installed.
+9. **Update the project proposal** with the changes: MySQL instead of SQLite, 2 zones, water as the fluid and PID control.
 
 ---
 

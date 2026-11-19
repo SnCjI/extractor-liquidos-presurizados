@@ -55,6 +55,7 @@ function estadoZona(z, row){
   const ssr = row ? row['ssr' + z] : 0;
   const sp = setpoints ? setpoints['sp_z' + z] : null;
   if (!enLinea) return { clase: '', texto: 'SIN DATOS' };
+  if (row && row.esp32 && row.esp32['inst' + z] === 0) return { clase: '', texto: 'NO CONECTADA' };
   if (t === null || t === undefined) return { clase: 'fault', texto: 'FALLA TERMOPAR' };
   const pot = row ? row['pot' + z] : null;
   if (ssr) return { clase: 'on', texto: pot === null || pot === undefined ? 'CALENTANDO' : `CALENTANDO ${Math.round(pot)} %` };
@@ -130,6 +131,21 @@ function pintar(row){
     const hayPot = pot !== null && pot !== undefined;
     $('zpot' + z).style.width = hayPot ? Math.max(0, Math.min(100, pot)) + '%' : '0%';
     $('zpotv' + z).textContent = hayPot ? Math.round(pot) + ' %' : '—';
+
+    // Ganancias del PID: las guardadas y si el ESP32 ya las está usando
+    if (setpoints && setpoints['kp' + z] !== undefined){
+      const g = gananciasZona(z);
+      $('zpid' + z).textContent = `PID kp ${numCorto(g.kp)} · ki ${numCorto(g.ki)} · kd ${numCorto(g.kd)}`;
+      const eco = row && row.esp32;
+      const okEl = $('zpidok' + z);
+      if (!enLinea || !eco || eco['kp' + z] === undefined){
+        okEl.textContent = ''; okEl.className = 'zpid-ok';
+      } else if (['kp', 'ki', 'kd'].every((k) => Math.abs(eco[k + z] - g[k]) < 1e-6)){
+        okEl.textContent = '✓ en el ESP32'; okEl.className = 'zpid-ok ok';
+      } else {
+        okEl.textContent = '⏳ enviando…'; okEl.className = 'zpid-ok pend';
+      }
+    }
 
     // Gráfica: mosaicos en vivo
     $('gz' + z).textContent = tTxt;
@@ -487,12 +503,39 @@ setInterval(() => {
 const modal = $('adjModal');
 let modo = null;   // { tipo: 'zona', z } o { tipo: 'power', encender }
 
+// Ganancias guardadas de una zona
+function gananciasZona(z){
+  return { kp: Number(setpoints['kp' + z]), ki: Number(setpoints['ki' + z]), kd: Number(setpoints['kd' + z]) };
+}
+// Número corto para mostrar (4, 0.005, 40.5)
+function numCorto(v){
+  return Number.isFinite(v) ? String(Number(v.toPrecision(4))) : '—';
+}
+
+function abrirPid(z){
+  if (!setpoints || setpoints['kp' + z] === undefined) return;
+  modo = { tipo: 'pid', z };
+  const g = gananciasZona(z);
+  $('adjTitle').textContent = `Control PID — Zona ${z} (${NOMBRE_ZONA[z]})`;
+  $('adjDesc').textContent = 'Ganancias que usa el ESP32 para decidir la potencia de la resistencia. El cambio se aplica en unos 2 segundos, sin volver a subir el programa.';
+  $('adjValueRow').hidden = true;
+  $('adjPidRow').hidden = false;
+  $('adjRange').hidden = false;
+  $('pidKp').value = g.kp; $('pidKi').value = g.ki; $('pidKd').value = g.kd;
+  const L = setpoints.pid_limites || { kp: [0, 100], ki: [0, 1], kd: [0, 1000] };
+  $('adjRange').textContent = `Permitido: kp ${L.kp[0]}–${L.kp[1]} · ki ${L.ki[0]}–${L.ki[1]} · kd ${L.kd[0]}–${L.kd[1]}`;
+  $('adjRange').className = 'adj-range';
+  $('adjOk').textContent = 'Aplicar PID';
+  abrirModal();
+}
+
 function abrirAjuste(z){
   if (!setpoints) return;
   modo = { tipo: 'zona', z };
   $('adjTitle').textContent = `Ajuste de temperatura — Zona ${z} (${NOMBRE_ZONA[z]})`;
   $('adjDesc').textContent = 'Temperatura que el ESP32 debe mantener en esta zona. El control PID ajusta la potencia de su resistencia (0 a 100 %) para llegar y quedarse ahí.';
   $('adjValueRow').hidden = false;
+  $('adjPidRow').hidden = true;
   $('adjRange').hidden = false;
   const inp = $('adjInput');
   inp.min = setpoints.sp_min; inp.max = setpoints.sp_max;
@@ -512,6 +555,7 @@ function abrirPower(){
     ? `Se activarán las 2 resistencias para llevar la zona superior a ${setpoints.sp_z1} °C y la inferior a ${setpoints.sp_z2} °C. Revisa que el extractor tenga agua y que la válvula esté en la posición correcta.`
     : 'Se apagarán las 2 resistencias. Las lecturas de temperatura siguen llegando.';
   $('adjValueRow').hidden = true;
+  $('adjPidRow').hidden = true;
   $('adjRange').hidden = true;
   $('adjOk').textContent = encender ? 'Sí, encender' : 'Sí, apagar';
   abrirModal();
@@ -522,11 +566,16 @@ function abrirModal(){
   $('adjStatus').className = 'adj-status';
   $('adjOperador').value = operadorGuardado();
   modal.hidden = false;
-  (modo.tipo === 'zona' ? $('adjInput') : ($('adjOperador').value ? $('adjOk') : $('adjOperador'))).focus();
+  (modo.tipo === 'zona' ? $('adjInput') : modo.tipo === 'pid' ? $('pidKp') : ($('adjOperador').value ? $('adjOk') : $('adjOperador'))).focus();
 }
 function cerrarModal(){ modal.hidden = true; modo = null; }
 
 document.querySelectorAll('.adj-btn').forEach((b) => b.addEventListener('click', () => abrirAjuste(Number(b.dataset.z))));
+document.querySelectorAll('.pid-btn').forEach((b) => b.addEventListener('click', () => abrirPid(Number(b.dataset.z))));
+$('pidDefecto').addEventListener('click', () => {
+  const d = (setpoints && setpoints.pid_defecto) || { kp: 4, ki: 0.005, kd: 40 };
+  $('pidKp').value = d.kp; $('pidKi').value = d.ki; $('pidKd').value = d.kd;
+});
 document.querySelectorAll('.step').forEach((b) => b.addEventListener('click', () => {
   const inp = $('adjInput');
   const v = (Number(inp.value) || 0) + Number(b.dataset.step);
@@ -574,6 +623,18 @@ $('adjForm').addEventListener('submit', async (e) => {
       return;
     }
     cuerpo['sp_z' + modo.z] = v;
+  } else if (modo.tipo === 'pid'){
+    const L = setpoints.pid_limites || { kp: [0, 100], ki: [0, 1], kd: [0, 1000] };
+    for (const [k, id] of [['kp', 'pidKp'], ['ki', 'pidKi'], ['kd', 'pidKd']]){
+      const v = Number($(id).value);
+      if ($(id).value === '' || !Number.isFinite(v) || v < L[k][0] || v > L[k][1]){
+        status.textContent = `${k} debe estar entre ${L[k][0]} y ${L[k][1]}.`;
+        status.className = 'adj-status error';
+        $(id).focus();
+        return;
+      }
+      cuerpo[k + modo.z] = v;
+    }
   } else {
     cuerpo.sistema_on = modo.encender ? 1 : 0;
   }

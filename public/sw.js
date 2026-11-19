@@ -3,7 +3,7 @@
 // pero SIEMPRE pide los datos en vivo (/api/...) directo a la red, nunca
 // desde caché, para no mostrar lecturas viejas.
 
-const CACHE_NAME = 'hmi-extractor-v6';
+const CACHE_NAME = 'hmi-extractor-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

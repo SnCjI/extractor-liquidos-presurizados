@@ -13,7 +13,7 @@ const cors = require('cors');
 const fs = require('fs');
 const os = require('os');
 const mysql = require('mysql2/promise');
-const { DB_NAME, crearBaseYTablas } = require('./esquema-mysql');
+const { DB_NAME, crearBaseYTablas, PID_DEFECTO } = require('./esquema-mysql');
 
 function leerConfigGuardada() {
   let guardada = {};
@@ -51,6 +51,16 @@ const SP_RECOMENDADO = 80;    // °C
 // La base de datos todavía tiene columnas para una zona 3 (versión anterior);
 // no se usan, pero se dejan para no borrar datos.
 const ZONAS = [1, 2];
+
+// Límites de las ganancias del PID que se pueden escribir desde la página.
+//   kp: % de potencia por °C de error
+//   ki: % por (°C · s)      kd: % por (°C / s)
+const PID_LIMITES = { kp: [0, 100], ki: [0, 1], kd: [0, 1000] };
+
+// Último estado que reportó cada ESP32 (ganancias que está usando y qué
+// zonas tiene conectadas). Solo se guarda en memoria: sirve para que la
+// página confirme que el ESP32 ya aplicó los cambios.
+const estadoEsp32 = new Map();
 
 const PORT = process.env.PORT || 3000;
 const TIMEZONE = process.env.TIMEZONE || 'America/Mexico_City';
@@ -112,6 +122,10 @@ async function leerSetpoints() {
     actualizado_ts: r.actualizado_ts,
     actualizado_por: r.actualizado_por,
     sp_min: SP_MIN, sp_max: SP_MAX, sp_recomendado: SP_RECOMENDADO,
+    // Ganancias del PID de cada zona
+    kp1: r.kp1 ?? PID_DEFECTO.kp, ki1: r.ki1 ?? PID_DEFECTO.ki, kd1: r.kd1 ?? PID_DEFECTO.kd,
+    kp2: r.kp2 ?? PID_DEFECTO.kp, ki2: r.ki2 ?? PID_DEFECTO.ki, kd2: r.kd2 ?? PID_DEFECTO.kd,
+    pid_limites: PID_LIMITES, pid_defecto: PID_DEFECTO,
   };
 }
 
@@ -129,6 +143,8 @@ const pct = (v) => { const n = num(v); return n === null ? null : Math.round(Mat
 //   "ssr1": 1, "ssr2": 0,                          // 1 = la resistencia está calentando
 //   "presion": null,                               // bar, opcional
 //   "sistema_on": 1, "alarma": ""                  // estado del control en el ESP32
+//   "kp1": 4, "ki1": 0.005, "kd1": 40, ...         // ganancias que está usando (opcional)
+//   "inst1": 1, "inst2": 0                         // zonas conectadas (opcional)
 // }
 app.post('/api/data', ruta(async (req, res) => {
   const key = req.header('x-device-key');
@@ -163,6 +179,12 @@ app.post('/api/data', ruta(async (req, res) => {
       b.alarma ? String(b.alarma).slice(0, 160) : null,
     ]
   );
+  // Lo que el ESP32 dice que está usando (si lo manda): ganancias y zonas conectadas
+  const eco = {};
+  for (const k of ['kp1', 'ki1', 'kd1', 'kp2', 'ki2', 'kd2']) if (num(b[k]) !== null) eco[k] = num(b[k]);
+  for (const k of ['inst1', 'inst2']) if (b[k] !== undefined) eco[k] = b[k] ? 1 : 0;
+  estadoEsp32.set(String(b.device_id).slice(0, 64), { ...eco, ts: Date.now() });
+
   res.json({ ok: true, setpoints: await leerSetpoints() });
 }));
 
@@ -172,7 +194,8 @@ app.get('/api/setpoints', ruta(async (req, res) => {
 }));
 
 // El HMI cambia set-points o enciende/apaga el sistema.
-// Body: { "operador": "Julia", "sp_z1": 80, "sp_z2": 75, "sistema_on": 1 }
+// Body: { "operador": "Julia", "sp_z1": 80, "sp_z2": 75, "sistema_on": 1,
+//         "kp1": 4, "ki1": 0.005, "kd1": 40 }   (todos opcionales)
 // Todo cambio queda registrado en la bitácora (operator_log) con quién lo hizo.
 app.post('/api/setpoints', ruta(async (req, res) => {
   const b = req.body || {};
@@ -201,6 +224,25 @@ app.post('/api/setpoints', ruta(async (req, res) => {
         + (redondeado > SP_RECOMENDADO ? ` (arriba de ${SP_RECOMENDADO} °C recomendado)` : ''));
     }
   }
+  // Ganancias del PID (kp1, ki1, kd1, kp2, ki2, kd2)
+  for (const zona of ZONAS) {
+    for (const g of ['kp', 'ki', 'kd']) {
+      const campo = g + zona;
+      if (b[campo] === undefined) continue;
+      const v = num(b[campo]);
+      const [min, max] = PID_LIMITES[g];
+      if (v === null || v < min || v > max) {
+        return res.status(400).json({
+          ok: false, error: `${g} de la zona ${zona} debe estar entre ${min} y ${max}`,
+        });
+      }
+      const redondeado = Math.round(v * 10000) / 10000;
+      if (redondeado !== actual[campo]) {
+        nuevo[campo] = redondeado;
+        cambios.push(`PID zona ${zona}: ${g} ${actual[campo]} → ${redondeado}`);
+      }
+    }
+  }
   if (b.sistema_on !== undefined) {
     const on = b.sistema_on ? 1 : 0;
     if (on !== actual.sistema_on) {
@@ -216,8 +258,11 @@ app.post('/api/setpoints', ruta(async (req, res) => {
   const now = new Date();
   await q(
     `UPDATE setpoints SET sp_z1 = ?, sp_z2 = ?, sistema_on = ?,
+            kp1 = ?, ki1 = ?, kd1 = ?, kp2 = ?, ki2 = ?, kd2 = ?,
             actualizado_ts = ?, actualizado_por = ? WHERE id = 1`,
-    [nuevo.sp_z1, nuevo.sp_z2, nuevo.sistema_on, now.getTime(), operador.slice(0, 100)]
+    [nuevo.sp_z1, nuevo.sp_z2, nuevo.sistema_on,
+     nuevo.kp1, nuevo.ki1, nuevo.kd1, nuevo.kp2, nuevo.ki2, nuevo.kd2,
+     now.getTime(), operador.slice(0, 100)]
   );
   const { fecha, hora } = fechaHoraLocal(now);
   await q(
@@ -232,7 +277,8 @@ app.get('/api/latest', ruta(async (req, res) => {
   const rows = await q('SELECT * FROM readings ORDER BY ts DESC LIMIT 1');
   // server_now: la página calcula con esto si el dato es reciente,
   // usando el reloj del servidor (no el del celular, que puede estar mal).
-  res.json(rows[0] ? { ...rows[0], server_now: Date.now() } : null);
+  // esp32: ganancias que el ESP32 dice estar usando y zonas conectadas
+  res.json(rows[0] ? { ...rows[0], esp32: estadoEsp32.get(rows[0].device_id) || null, server_now: Date.now() } : null);
 }));
 
 // Historial reciente (gráficas). ?limit=200

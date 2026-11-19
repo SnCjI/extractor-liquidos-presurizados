@@ -154,6 +154,8 @@ Detalles que vale la pena conocer:
 - Para cambiar un ajuste o encender el sistema, la página **pide el nombre del operador**. Así cada cambio queda firmado en la bitácora.
 - El ajuste permitido va de **0 a 100 °C**. **80 °C es el máximo recomendado**: si alguien pone más, la página pide confirmarlo y la bitácora lo marca.
 - El botón **Ver en celular** muestra un código QR para abrir la página desde el teléfono.
+- Cada zona tiene un botón **⚙ PID** para cambiar su `kp`, `ki` y `kd`. El ESP32 recibe los valores nuevos en unos 2 segundos, sin volver a subir el programa. La tarjeta muestra los valores actuales y **✓ en el ESP32** cuando el ESP32 confirma que ya los usa. Cada cambio queda en la bitácora con el nombre del operador.
+- Si una zona todavía no está conectada (`ZONA_INSTALADA` en `false` dentro de `esp32_extractor.ino`), la página la muestra como **NO CONECTADA** en lugar de dar alarma.
 
 ---
 
@@ -226,6 +228,10 @@ En el orden en que se fueron logrando:
 
 **11. Primera comparación de la lectura.** Se comparó el termopar contra un termómetro infrarrojo: el termopar marcó cerca de 41.5 °C y el infrarrojo 36.8 °C.
 
+**12. Herramientas para afinar el PID.** Un modo manual para la prueba de escalón (`pot 40`) y el programa `calcular-pid.js`, que calcula `kp`, `ki` y `kd` a partir de la respuesta medida del equipo.
+
+**13. Control del PID desde la página.** El `kp`, `ki` y `kd` de cada zona se cambian desde la página web y se guardan en MySQL; el ESP32 los aplica al momento y avisa qué valores está usando.
+
 ![Comparación entre el termómetro infrarrojo y la lectura del termopar](docs/img/comparacion-termometro.jpg)
 
 ---
@@ -249,10 +255,9 @@ En el orden en que se fueron logrando:
 4. **Calibrar los termopares** y, si hace falta, agregar una corrección en el programa.
 5. **Agregar el sensor de presión.** La página y la base de datos ya tienen el espacio reservado; hoy muestran "sin sensor".
 6. **Instalar la bomba** de alimentación, que en el diagrama aparece como opcional.
-7. **Cambiar las ganancias del PID desde la página**, sin tener que volver a cargar el programa al ESP32.
-8. **Pasar el sistema a la computadora definitiva** del laboratorio, con su base de datos.
-9. **Montar la electrónica en un gabinete**, con las protecciones físicas instaladas.
-10. **Actualizar el anteproyecto** con los cambios: MySQL en lugar de SQLite, 2 zonas, agua como fluido y control PID.
+7. **Pasar el sistema a la computadora definitiva** del laboratorio, con su base de datos.
+8. **Montar la electrónica en un gabinete**, con las protecciones físicas instaladas.
+9. **Actualizar el anteproyecto** con los cambios: MySQL en lugar de SQLite, 2 zonas, agua como fluido y control PID.
 
 ---
 

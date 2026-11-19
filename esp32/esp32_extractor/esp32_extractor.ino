@@ -14,8 +14,9 @@
        (ej. 40 % = 0.8 s encendida y 1.2 s apagada).
     3. Manda las lecturas y la potencia al servidor (laptop) cada 2 s.
     4. El servidor responde con los AJUSTES que el operador escribió en el
-       HMI (temperatura deseada de cada zona, 0 a 100 °C, y si el sistema
-       está encendido).
+       HMI: temperatura deseada de cada zona (0 a 100 °C), si el sistema
+       está encendido y las ganancias del PID (kp, ki, kd) de cada zona.
+       Así el PID se afina desde la página, sin volver a subir el programa.
 
   El control corre en una tarea aparte (FreeRTOS), así que aunque el envío
   al servidor tarde, los SSR se siguen prendiendo y apagando a tiempo.
@@ -73,13 +74,22 @@ const int PIN_SCK   = 18;                   // reloj de los 2 MAX6675
 const int PIN_SO    = 19;                   // datos de los 2 MAX6675
 const int PIN_CS[NUM_ZONAS]  = { 5, 17 };   // CS del MAX6675 de la zona 1 y 2
 const int PIN_SSR[NUM_ZONAS] = { 25, 26 };  // SSR de la zona 1 y 2
-// Si tu SSR enciende con LOW en vez de HIGH, cambia esto a LOW:
+// El SSR-40DA enciende con HIGH (3 (+) -> GPIO, 4 (−) -> GND).
+// NO lo cambies a LOW con esa conexión: la lógica quedaría al revés y las
+// resistencias se PRENDERÍAN al arrancar y cuando el PID pide 0 %.
 const int SSR_ENCENDIDO = HIGH;
 
-// Ganancias del PID de cada zona. Son valores CONSERVADORES que no se pasan
-// del ajuste ni en una celda de acero pesada (pueden ser lentos).
-// Saca los de TU equipo con la prueba de escalón de prueba_finalpid.ino y
-// server/calcular-pid.js, y cópialos aquí (cada zona puede tener los suyos).
+// Zonas conectadas. Si por ahora solo tienes armada la zona 1, deja la
+// zona 2 en false: no se lee su termopar, su resistencia queda apagada y
+// la página la muestra como "NO CONECTADA" en lugar de dar alarma.
+//                                         zona 1  zona 2
+const bool ZONA_INSTALADA[NUM_ZONAS] = {   true,   false  };
+
+// Ganancias INICIALES del PID de cada zona. Son valores CONSERVADORES que no
+// se pasan del ajuste ni en una celda de acero pesada (pueden ser lentos).
+// Ya NO hace falta cambiarlas aquí: se cambian desde la página (botón
+// "PID" de cada zona) y el ESP32 las recibe en cada envío al servidor.
+// Estas solo se usan mientras no llega la primera respuesta del servidor.
 //                               zona 1  zona 2
 const float KP[NUM_ZONAS] = {    4.0,    4.0   };   // % de potencia por °C de error
 const float KI[NUM_ZONAS] = {    0.005,  0.005 };   // % por (°C · s)
@@ -93,6 +103,9 @@ const unsigned long PERIODO_PID_MS = 1000; // cada cuánto se lee y se calcula e
 const unsigned long VENTANA_MS     = 2000; // ventana de encendido de los SSR
 const unsigned long TIMEOUT_SERVIDOR_MS = 15000;  // sin respuesta -> todo apagado
 const unsigned long INTERVALO_ENVIO_MS  = 2000;
+
+// Rango aceptado para las ganancias que llegan del servidor (igual que en él)
+const float KP_MAX = 100.0, KI_MAX = 1.0, KD_MAX = 1000.0;
 
 // =============================================================
 
@@ -194,8 +207,12 @@ void calcularControl(float dt) {
   float t[NUM_ZONAS], pot[NUM_ZONAS];
   for (int i = 0; i < NUM_ZONAS; i++) {
     const char* motivo = "";
-    t[i] = leerTermopar(i, &motivo);
     char linea[80] = "";
+    if (!ZONA_INSTALADA[i]) {             // zona no conectada: apagada y sin alarma
+      t[i] = NAN; pot[i] = 0; pid[i].reiniciar();
+      continue;
+    }
+    t[i] = leerTermopar(i, &motivo);
 
     if (!on || sinServidor) {
       pot[i] = 0; pid[i].reiniciar();
@@ -258,6 +275,27 @@ void agregarValor(JsonDocument& doc, const char* clave, float v, float escala) {
   else doc[clave] = roundf(v * escala) / escala;
 }
 
+// Toma las ganancias del PID que mandó el servidor (las escribió el
+// operador en la página). Si una no viene o está fuera de rango, se deja
+// la que ya tenía. La parte integral no se borra, así no hay saltos.
+void aplicarGanancias(JsonObject s) {
+  for (int i = 0; i < NUM_ZONAS; i++) {
+    char k[8];
+    float kp = pid[i].kp, ki = pid[i].ki, kd = pid[i].kd;
+    snprintf(k, sizeof(k), "kp%d", i + 1); if (s[k].is<float>()) kp = s[k].as<float>();
+    snprintf(k, sizeof(k), "ki%d", i + 1); if (s[k].is<float>()) ki = s[k].as<float>();
+    snprintf(k, sizeof(k), "kd%d", i + 1); if (s[k].is<float>()) kd = s[k].as<float>();
+    bool valido = kp >= 0 && kp <= KP_MAX && ki >= 0 && ki <= KI_MAX && kd >= 0 && kd <= KD_MAX;
+    if (!valido) continue;
+    if (kp != pid[i].kp || ki != pid[i].ki || kd != pid[i].kd) {
+      taskENTER_CRITICAL(&candado);
+      pid[i].kp = kp; pid[i].ki = ki; pid[i].kd = kd;
+      taskEXIT_CRITICAL(&candado);
+      Serial.printf("PID zona %d actualizado desde la pagina: kp %.3f  ki %.4f  kd %.2f\n", i + 1, kp, ki, kd);
+    }
+  }
+}
+
 void enviarYRecibirAjustes() {
   // Copia de lo que midió la tarea de control
   float t[NUM_ZONAS], pot[NUM_ZONAS], sp[NUM_ZONAS];
@@ -289,6 +327,15 @@ void enviarYRecibirAjustes() {
   doc["presion"] = nullptr;                // sin sensor de presión por ahora
   doc["sistema_on"] = on ? 1 : 0;
   doc["alarma"] = txt;
+  // Ganancias que está usando y zonas conectadas (la página lo muestra
+  // para confirmar que el ESP32 ya aplicó los cambios)
+  for (int i = 0; i < NUM_ZONAS; i++) {
+    char k[8];
+    snprintf(k, sizeof(k), "kp%d", i + 1);   doc[k] = pid[i].kp;
+    snprintf(k, sizeof(k), "ki%d", i + 1);   doc[k] = pid[i].ki;
+    snprintf(k, sizeof(k), "kd%d", i + 1);   doc[k] = pid[i].kd;
+    snprintf(k, sizeof(k), "inst%d", i + 1); doc[k] = ZONA_INSTALADA[i] ? 1 : 0;
+  }
   String cuerpo;
   serializeJson(doc, cuerpo);
 
@@ -313,6 +360,7 @@ void enviarYRecibirAjustes() {
       sistemaOn = nuevoOn;
       ultimaRespuestaOk = millis();
       taskEXIT_CRITICAL(&candado);
+      aplicarGanancias(s);
     }
   } else {
     Serial.printf("Error al enviar (HTTP %d). ¿Esta encendido el servidor en la laptop?\n", code);
